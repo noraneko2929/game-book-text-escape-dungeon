@@ -3,13 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI生成テキスト脱出ゲーム：極秘研究所からの脱出</title>
+    <title>ビジュアルルート・脱出シミュレーター</title>
     <style>
-        /* 全体のダークモード風デザイン */
         body {
-            font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
-            background-color: #121214;
-            color: #e0e0e6;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #0b0b0e;
+            color: #e3e3e6;
             margin: 0;
             padding: 20px;
             display: flex;
@@ -20,194 +19,249 @@
 
         .game-container {
             width: 100%;
-            max-width: 600px;
-            background-color: #1e1e24;
-            border-radius: 12px;
-            padding: 25px;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
-            border: 1px solid #2e2e38;
+            max-width: 580px;
+            background-color: #141419;
+            border: 1px solid #23232f;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
         }
 
-        /* ヘッダー・ステータス表示 */
         .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-bottom: 2px solid #2e2e38;
-            padding-bottom: 15px;
+            border-bottom: 1px solid #23232f;
+            padding-bottom: 14px;
             margin-bottom: 20px;
         }
 
         .title {
             font-size: 1.2rem;
-            font-weight: bold;
-            color: #4caf50;
+            font-weight: 700;
+            color: #00bcd4;
             margin: 0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
-        .badge {
-            background-color: #2e2e38;
-            padding: 4px 10px;
+        .mode-badge {
+            font-size: 0.8rem;
+            padding: 4px 12px;
             border-radius: 20px;
-            font-size: 0.85rem;
-            color: #a0a0ab;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .badge-normal { background: rgba(0, 188, 212, 0.15); color: #00bcd4; border: 1px solid #00bcd4; }
+        .badge-hard { background: rgba(244, 67, 54, 0.15); color: #f44336; border: 1px solid #f44336; }
+
+        /* 💡 ビジュアルルートマップ（点と線の表示エリア） */
+        .map-container {
+            position: relative;
+            width: 100%;
+            height: 120px;
+            background-color: #0d0d11;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #1a1a24;
+            overflow: hidden;
         }
 
-        /* テキストエリア */
-        .text-area {
-            font-size: 1.05rem;
+        .svg-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        /* 線の青いアニメーション */
+        .route-line {
+            stroke: #1a1a26;
+            stroke-width: 3;
+            transition: stroke 0.5s ease;
+        }
+        .route-line.active {
+            stroke: #00bcd4;
+            stroke-dasharray: 8;
+            animation: lineFlow 2s linear infinite;
+        }
+
+        @keyframes lineFlow {
+            from { stroke-dashoffset: 20; }
+            to { stroke-dashoffset: 0; }
+        }
+
+        /* 点（ノード）のスタイル */
+        .node {
+            position: absolute;
+            width: 14px;
+            height: 14px;
+            background-color: #1a1a26;
+            border: 2px solid #333344;
+            border-radius: 50%;
+            z-index: 2;
+            transform: translate(-50%, -50%);
+            transition: all 0.5s ease;
+        }
+        .node.active {
+            background-color: #00bcd4;
+            border-color: #ffffff;
+            box-shadow: 0 0 12px #00bcd4;
+        }
+        .node.clear { background-color: #4caf50; border-color: #ffffff; box-shadow: 0 0 12px #4caf50; }
+        .node.fail { background-color: #f44336; border-color: #ffffff; box-shadow: 0 0 12px #f44336; }
+
+        /* テキスト表示エリア */
+        .story-box {
+            font-size: 0.98rem;
             line-height: 1.7;
-            margin-bottom: 30px;
-            min-height: 120px;
+            color: #d1d1d6;
+            margin-bottom: 24px;
+            min-height: 90px;
             white-space: pre-wrap;
         }
 
-        /* 選択肢ボタンエリア */
-        .choice-container {
+        /* 選択肢ボタン */
+        .choices-box {
             display: flex;
             flex-direction: column;
-            gap: 12px;
-            margin-bottom: 25px;
+            gap: 10px;
         }
 
-        .btn {
-            background-color: #2a2a35;
+        .btn-choice {
+            background-color: #1c1c24;
             color: #ffffff;
-            border: 1px solid #3f3f4f;
-            padding: 14px 20px;
-            font-size: 1rem;
+            border: 1px solid #2d2d3d;
+            padding: 14px 16px;
+            font-size: 0.95rem;
             border-radius: 8px;
             cursor: pointer;
             text-align: left;
-            transition: all 0.2s ease;
+            transition: all 0.15s ease;
+        }
+        .btn-choice:hover {
+            background-color: #242431;
+            border-color: #00bcd4;
         }
 
-        .btn:hover {
-            background-color: #353545;
-            border-color: #4caf50;
-            transform: translateY(-1px);
-        }
-
-        .btn:active {
-            transform: translateY(1px);
-        }
-
-        /* 特殊なボタン（リセットなど） */
-        .btn-reset {
-            background-color: #3a1e1e;
-            border-color: #5a2e2e;
+        .btn-system {
+            background-color: #2a1a1a;
+            border-color: #4a2525;
+            color: #ff9800;
             text-align: center;
-            margin-top: 15px;
+            font-weight: 600;
         }
+        .btn-system:hover { background-color: #361f1f; border-color: #ff9800; }
 
-        .btn-reset:hover {
-            background-color: #4a2828;
-            border-color: #f44336;
-        }
-        
-        .success-text { color: #4caf50; font-weight: bold; }
-        .danger-text { color: #f44336; font-weight: bold; }
+        .text-win { color: #4caf50; font-weight: bold; }
+        .text-lose { color: #f44336; font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div class="game-container">
     <div class="header">
-        <h1 class="title">🔬 LAB ESCAPE</h1>
-        <div id="status-badge" class="badge">探索中</div>
+        <h2 class="title">⚡ ROUTE SIMULATOR</h2>
+        <div id="mode-indicator" class="mode-badge badge-normal">NORMAL MODE</div>
     </div>
     
-    <!-- 物語が表示される場所 -->
-    <div id="text-display" class="text-area"></div>
+    <!-- 💡 点と線のビジュアルルートマップ -->
+    <div class="map-container">
+        <svg class="svg-layer">
+            <!-- スタートから各ルートへの線 -->
+            <line id="line-door" class="route-line" x1="50" y1="60" x2="200" y2="30" />
+            <line id="line-panel" class="route-line" x1="50" y1="60" x2="200" y2="60" />
+            <line id="line-vent" class="route-line" x1="50" y1="60" x2="200" y2="90" />
+            
+            <!-- 扉からの展開 -->
+            <line id="line-s_door" class="route-line" x1="200" y1="30" x2="380" y2="30" />
+            <line id="line-f_door" class="route-line" x1="200" y1="30" x2="380" y2="50" />
+            
+            <!-- 配電盤からの展開 -->
+            <line id="line-s_panel" class="route-line" x1="200" y1="60" x2="380" y2="60" />
+            <line id="line-f_panel" class="route-line" x1="200" y1="60" x2="380" y2="75" />
+            
+            <!-- 通気口からの展開 -->
+            <line id="line-s_vent" class="route-line" x1="200" y1="90" x2="380" y2="90" />
+            <line id="line-f_vent" class="route-line" x1="200" y1="90" x2="380" y2="105" />
+        </svg>
+
+        <!-- 座標配置された点（ノード） -->
+        <div id="node-start" class="node active" style="left: 50px; top: 60px;"></div>
+        
+        <div id="node-door" class="node" style="left: 200px; top: 30px;"></div>
+        <div id="node-panel" class="node" style="left: 200px; top: 60px;"></div>
+        <div id="node-vent" class="node" style="left: 200px; top: 90px;"></div>
+        
+        <div id="node-s_door" class="node" style="left: 380px; top: 30px;"></div>
+        <div id="node-f_door" class="node" style="left: 380px; top: 50px;"></div>
+        <div id="node-s_panel" class="node" style="left: 380px; top: 60px;"></div>
+        <div id="node-f_panel" class="node" style="left: 380px; top: 75px;"></div>
+        <div id="node-s_vent" class="node" style="left: 380px; top: 90px;"></div>
+        <div id="node-f_vent" class="node" style="left: 380px; top: 105px;"></div>
+    </div>
     
-    <!-- 選択肢ボタンが表示される場所 -->
-    <div id="choice-display" class="choice-container"></div>
+    <div id="story-display" class="story-box"></div>
+    <div id="choices-display" class="choices-box"></div>
 </div>
 
 <script>
-    // ゲームの全シナリオデータ（データ構造を変更すれば、別ゲームの自動生成も容易です）
-    const storyData = {
+    let currentMode = 'normal';
+
+    const gameData = {
+        select_mode: {
+            text: "【シミュレーション起動】\nゲームの難易度を選択してください。\n\n※ハードモードではヒントが消失し、1つのミスで即座にロックダウン（システム強制終了）となります。",
+            choices: [
+                { text: "NORMAL MODE （ヒントあり・リトライ可能）", action: () => { currentMode = 'normal'; loadScene('start'); } },
+                { text: "HARD MODE （ヒントなし・一撃デス）", action: () => { currentMode = 'hard'; loadScene('start'); } }
+            ],
+            nodes: ['start'], lines: []
+        },
         start: {
-            text: "冷たいアラーム音で目が覚めた。辺りは薄暗く、見慣れない精密機械に囲まれている。どうやら極秘の生体研究所に閉じ込められてしまったようだ。\n\n正面には重厚な『電子ロック式の扉』、右手にはダクトから風が吹き出す『換気口』がある。壁の警告灯が赤く点滅し、空気の供給が止まりつつあることを示している。",
+            text: "気が付くと、あなたは無機質なコンクリートに囲まれた見知らぬ部屋に横たわっていた。\n\n正面には重厚な『鉄製の扉』、横には怪しげな『配電盤』が剥き出しになっている。また、部屋の隅には古い『通気口の格子』がガタついている。壁の警告灯がゆっくりと点滅を始めた。",
             choices: [
-                { text: "正面の扉を調べて電子ロックに挑む", next: "door_look" },
-                { text: "換気口のカバーを外して中に入る", next: "vent_look" }
+                { text: "正面の扉を詳しく調べてみる", next: "door" },
+                { text: "剥き出しの配電盤を操作してみる", next: "panel" },
+                { text: "ガタついている通気口をこじ開ける", next: "vent" }
             ],
-            status: "探索中"
+            nodes: ['start'], lines: []
         },
-        door_look: {
-            text: "扉の電子キーパッドには、かすれた文字で『4つの数字を入力してください』と表示されている。\n隣のデスクを見ると、研究員の残したメモに『実験体04号の発見記念日。歴史が動いた日だ。』と殴り書きされている。カレンダーには10月24日に印がついている。",
+        door: {
+            text: "【扉の前】\n扉のテンキーの横に『3つのデジタル数字』を入力する画面がある。足元には古いノートが落ちていた。\n\n" + (currentMode === 'normal' ? "💡ノーマルヒント: ノートに『実験番号：104の裏。反転させろ』とある。" : "⚠️ハード警告: ノートの文字は擦り切れて読めない。直感を信じろ。"),
             choices: [
-                { text: "暗証番号に『1024』と入力する", next: "escape_door" },
-                { text: "力任せに配線をちぎってショートさせる", next: "door_fail" },
-                { text: "諦めて換気口へ向かう", next: "vent_look" }
+                { text: "テンキーに「401」と入力する", next: "success_door" },
+                { text: "テンキーに「104」と入力する", next: "fail_door" }
             ],
-            status: "暗号の部屋"
+            nodes: ['start', 'door'], lines: ['line-door']
         },
-        vent_look: {
-            text: "狭い換気口を這って進むと、道が二つに分かれていた。\n左からは『ゴゴゴ…』と怪しい機械の駆動音が聞こえる。右からはかすかに『外の冷たい風』が流れ込んできているようだ。しかし、右の通路の奥には怪しい緑色のガスが漂っているのが見える。",
+        panel: {
+            text: "【配電盤の前】\n配電盤の中に赤と青の太い配線が絡み合っている。電磁ロックを切るにはどちらかの線を切断する必要があるようだ。\n\n" + (currentMode === 'normal' ? "💡ノーマルヒント: 青い線の奥に「安全」の刻印が見える。" : "⚠️ハード警告: 配線はすべて激しく火花を散らしている。"),
             choices: [
-                { text: "左の機械音がする通路へ進む", next: "vent_left" },
-                { text: "右のガスが漂う通路へ飛び込む", next: "vent_right" },
-                { text: "引き返して正面の扉を調べる", next: "door_look" }
+                { text: "青い配線を切断する", next: "success_panel" },
+                { text: "赤い配線を強引に引き抜く", next: "fail_panel" }
             ],
-            status: "ダクト内"
+            nodes: ['start', 'panel'], lines: ['line-panel']
         },
-        escape_door: {
-            text: "<span class='success-text'>【生還：正面突破エンド】</span>\n\nピッ、という電子音と共に重い扉がゆっくりと開放された！\n滑り込んだ先は、朝日の差し込む研究所のロータリーだった。あなたは自身の知恵によって、無傷で完全に生還することに成功した。",
-            choices: [],
-            status: "脱出成功！"
+        vent: {
+            text: "【通気口内部】\n狭いダクトの中を這って進むと、途中で道が左右に分岐していた。\n\n" + (currentMode === 'normal' ? "💡ノーマルヒント: 左からは冷たい外の風が吹き込んでくる。" : "⚠️ハード警告: 暗闇で五感が狂い、風の方向がわからない。"),
+            choices: [
+                { text: "左の通路へ進む", next: "success_vent" },
+                { text: "右の通路へ進む", next: "fail_vent" }
+            ],
+            nodes: ['start', 'vent'], lines: ['line-vent']
         },
-        door_fail: {
-            text: "<span class='danger-text'>【ゲームオーバー：セキュリティトラップ】</span>\n\nバチバチッ！と激しい火花が散り、強烈な電流が体を駆け抜けた。\n防犯システムが作動し、部屋全体のロックが完全封鎖されてしまう。酸素が薄れゆく中、あなたの意識は遠のいていった…。",
-            choices: [],
-            status: "死亡"
+        success_door: {
+            text: "<span class='text-win'>【生還：正面解錠エンド】</span>\n\nカチャリと音が響き扉が開いた！あなたは自身の洞察力によって、安全に生還を果たした！",
+            choices: [], nodes: ['start', 'door', 's_door'], lines: ['line-door', 'line-s_door'], end: 'clear'
         },
-        vent_left: {
-            text: "<span class='success-text'>【生還：裏口からの脱出エンド】</span>\n\n通路の先は巨大な換気ファン室だった。幸いにもファンはメンテナンスのため停止している。梯子をよじ登り、天井のハッチを押し開けると、そこは研究所の裏山だった！\n泥だらけになりながらも、あなたは脱出に成功した。",
-            choices: [],
-            status: "脱出成功！"
+        fail_door: {
+            text: "<span class='text-lose'>【ゲームオーバー：トラップ作動】</span>\n\nエラー音が鳴り響き、高圧の催眠ガスが噴射された。あなたの意識は完全に闇に沈んだ…。",
+            choices: [], nodes: ['start', 'door', 'f_door'], lines: ['line-door', 'line-f_door'], end: 'fail'
         },
-        vent_right: {
-            text: "<span class='danger-text'>【ゲームオーバー：毒ガス充満】</span>\n\n風を頼りに突き進んだが、緑色のガスは研究所が廃棄した猛毒の神経ガスだった！\n激しい咳き込みと共に、一歩も動けなくなってしまう。あと一歩で外の世界だったが、あなたの冒険はここで終わりを迎えた。",
-            choices: [],
-            status: "死亡"
-        }
-    };
-
-    // ゲームの進行を管理する関数
-    function renderScene(sceneKey) {
-        const scene = storyData[sceneKey];
-        
-        // テキストとステータスの更新
-        document.getElementById('text-display').innerHTML = scene.text;
-        document.getElementById('status-badge').innerText = scene.status;
-        
-        const choiceDisplay = document.getElementById('choice-display');
-        choiceDisplay.innerHTML = ''; // ボタンの初期化
-        
-        // 選択肢ボタンの動的生成
-        if (scene.choices.length > 0) {
-            scene.choices.forEach(choice => {
-                const button = document.createElement('button');
-                button.className = 'btn';
-                button.innerText = choice.text;
-                button.onclick = () => renderScene(choice.next);
-                choiceDisplay.appendChild(button);
-            });
-        } else {
-            // エンディングに達した場合のリトライボタン
-            const retryButton = document.createElement('button');
-            retryButton.className = 'btn btn-reset';
-            retryButton.innerText = "最初からやり直す（リトライ）";
-            retryButton.onclick = () => renderScene('start');
-            choiceDisplay.appendChild(retryButton);
-        }
-    }
-
-    // 最初の一歩を起動
-    renderScene('start');
-</script>
-
-</body>
-</html>
+        success_panel: {
+            text: "<span class='text-win'>【生還：システムダウンエンド】</span>\n\n部屋の明かりが消え、電磁ロックが解除された！手探りで扉を開け、脱出に成功した！",
+            choices: [], nodes: ['start', 'panel', 's_panel'], lines: ['line-panel', 'line-s_panel'], end: 'clear'
+        },
+        fail_panel: {
