@@ -265,3 +265,79 @@
             choices: [], nodes: ['start', 'panel', 's_panel'], lines: ['line-panel', 'line-s_panel'], end: 'clear'
         },
         fail_panel: {
+text: "【ゲームオーバー：強力感電】\n\nバリバリッ！と強烈な電流が全身を襲った。あなたは防犯電流に直撃し、その場に崩れ落ちた。",
+choices: [], nodes: ['start', 'panel', 'f_panel'], lines: ['line-panel', 'line-f_panel'], end: 'fail'
+},
+success_vent: {
+text: "【生還：通気口ハッチエンド】\n\nハッチを突き破るとそこは外の森だった。あなたは誰にも見つかることなく無事に脱出を遂げた！",
+choices: [], nodes: ['start', 'vent', 's_vent'], lines: ['line-vent', 'line-s_vent'], end: 'clear'
+},
+fail_vent: {
+text: "【ゲームオーバー：ダクト火災】\n\n右の先は施設の焼却炉だった！引き返すこともできず、煙の中であなたの息は途絶えた。",
+choices: [], nodes: ['start', 'vent', 'f_vent'], lines: ['line-vent', 'line-f_vent'], end: 'fail'
+}
+};
+function resetVisuals() {
+document.querySelectorAll('.node').forEach(n => n.className = 'node');
+document.querySelectorAll('.route-line').forEach(l => l.className.baseVal = 'route-line');
+}
+function loadScene(sceneKey) {
+const scene = gameData[sceneKey];
+// ヘッダーの難易度表示更新
+const indicator = document.getElementById('mode-indicator');
+if (sceneKey === 'select_mode') {
+indicator.innerText = "SETUP";
+indicator.className = "mode-badge badge-normal";
+resetVisuals();
+document.getElementById('node-start').classList.add('active');
+} else {
+indicator.innerText = currentMode === 'normal' ? "NORMAL MODE" : "HARD MODE";
+indicator.className = currentMode === 'normal' ? "mode-badge badge-normal" : "mode-badge badge-hard";
+}
+// テキスト更新
+document.getElementById('story-display').innerHTML = scene.text;
+// 💡 点と線のビジュアル更新
+if (sceneKey !== 'select_mode') {
+resetVisuals();
+// 通過した線をアクティブ（青いアニメーション）にする
+scene.lines.forEach(lineId => {
+const line = document.getElementById(lineId);
+if (line) line.className.baseVal = 'route-line active';
+});
+// 通過した点をアクティブにする
+scene.nodes.forEach(nodeId => {
+const node = document.getElementById(node-${nodeId});
+if (node) node.classList.add('active');
+});
+// 終了ノードのカラーリング変更
+if (scene.end) {
+const endNodeId = scene.nodes[scene.nodes.length - 1];
+const endNode = document.getElementById(node-${endNodeId});
+if (endNode) {
+endNode.classList.remove('active');
+endNode.classList.add(scene.end); // clear または fail
+}
+}
+}
+// ボタンの生成
+const choicesContainer = document.getElementById('choices-display');
+choicesContainer.innerHTML = '';
+if (scene.choices.length > 0) {
+scene.choices.forEach(c => {
+const btn = document.createElement('button');
+btn.className = 'btn-choice';
+btn.innerText = c.text;
+btn.onclick = c.action ? c.action : () => loadScene(c.next);
+choicesContainer.appendChild(btn);
+});
+} else {
+// エンディングに達した場合
+const retryBtn = document.createElement('button');
+retryBtn.className = 'btn-choice btn-system';
+retryBtn.innerText = "タイトル（難易度選択）に戻る";
+retryBtn.onclick = () => loadScene('select_mode');
+choicesContainer.appendChild(retryBtn);
+}
+}
+// 初期起動
+loadScene('select_mode');
