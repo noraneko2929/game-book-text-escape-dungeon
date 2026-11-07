@@ -1,6 +1,6 @@
 /**
  * gameEngine.js
- * ゲームの描画・状態管理ライブラリ（ランク別セーブ・リトライ対応版）
+ * ゲームの描画・状態管理ライブラリ（3スロット固定・オートスクロール復帰版）
  */
 class EscapeGameEngine {
     constructor(storyData, config = {}) {
@@ -10,17 +10,14 @@ class EscapeGameEngine {
         this.statusBadgeId = config.statusBadgeId || 'status-badge';
         this.startSceneKey = config.startSceneKey || 'start';
         this.saveKey = (config.saveKey || 'escape_game') + '_save_rank';
-        this.historyKey = (config.saveKey || 'escape_game') + '_history_v10';
-        this.checkpointKey = (config.saveKey || 'escape_game') + '_checkpoint_v10';
+        this.historyKey = (config.saveKey || 'escape_game') + '_history_v11';
+        this.checkpointKey = (config.saveKey || 'escape_game') + '_checkpoint_v11';
     }
 
     init() {
         this.routeHistory = JSON.parse(localStorage.getItem(this.historyKey) || '[]');
-        
-        // ランクごとのセーブポイント（未設定なら 'start'）
         this.currentCheckpoint = localStorage.getItem(this.checkpointKey) || this.startSceneKey;
         
-        // 起動時は保存されているチェックポイント、または前回のセーブシーンから再開
         const savedScene = localStorage.getItem(this.saveKey);
         const targetScene = (savedScene && this.storyData[savedScene]) ? savedScene : this.currentCheckpoint;
 
@@ -42,7 +39,6 @@ class EscapeGameEngine {
         return { id: sceneKey, name: displayName };
     }
 
-    // シーンキーから階層ランクを判定
     getSceneRank(sceneKey) {
         if (sceneKey.startsWith('escape')) return 'upper';
         const match = sceneKey.match(/^f(\d+)/);
@@ -54,12 +50,10 @@ class EscapeGameEngine {
         return 'deep';                   // 下層 (16〜20)
     }
 
-    // 階層ランクが上がったタイミングでチェックポイントを更新・セーブする
     updateCheckpoint(sceneKey) {
         const rank = this.getSceneRank(sceneKey);
         let newCheckpoint = null;
 
-        // 各ランクの最初の到達地点をチェックポイントとする
         if (rank === 'upper' && sceneKey === 'f10_p1') {
             newCheckpoint = 'f10_p1';
         } else if (rank === 'mid' && sceneKey === 'f15_p1') {
@@ -98,7 +92,6 @@ class EscapeGameEngine {
         const nodeItem = this.getMapNodeItem(sceneKey, scene);
         const isGameOver = !scene.choices || scene.choices.length === 0;
 
-        // ゲームオーバーでなければ現在の進行状況をセーブ
         if (!isGameOver) {
             localStorage.setItem(this.saveKey, sceneKey);
             
@@ -149,7 +142,6 @@ class EscapeGameEngine {
                 choiceDisplay.appendChild(button);
             });
         } else if (!isEnding) {
-            // ゲームオーバー時は、到達した階層ランクのセーブポイント（チェックポイント）からリトライ
             const retryTarget = this.currentCheckpoint;
 
             const checkpointBtn = document.createElement('button');
@@ -198,40 +190,59 @@ class EscapeGameEngine {
             displayList = [{ id: currentNodeId, name: currentScene.status || '未知の最深部' }];
         }
 
-        let activeElement = null;
+        // 通過履歴リスト
+        const itemsToRender = [];
 
+        // 1. 通過済み／現在地のフロアアイテムを作成
         displayList.forEach((item, index) => {
             const isCurrent = (item.id === currentNodeId || index === displayList.length - 1);
+            let stateClass = isCurrent ? 'floor-current' : 'floor-passed';
+            if (isCurrent && isGameOver) stateClass = 'floor-dead';
 
+            itemsToRender.push({
+                type: 'floor',
+                id: item.id,
+                name: `${item.name}${isCurrent ? '（現在地）' : ''}`,
+                className: stateClass
+            });
+        });
+
+        // 2. ゲーム進行中（ゲームオーバー・クリア以外）なら先頭（最上部）に未到達階層「？？？」を追加
+        const isEnding = currentNodeId.startsWith('escape_');
+        if (!isGameOver && !isEnding) {
+            itemsToRender.push({
+                type: 'floor',
+                id: 'unknown_next',
+                name: '？？？ (未到達)',
+                className: 'floor-unknown'
+            });
+        }
+
+        // DOM構築（下から上へと接続していく）
+        itemsToRender.forEach((item, index) => {
             const floorItem = document.createElement('div');
-            floorItem.className = `route-floor-item ${isCurrent ? 'floor-current' : 'floor-passed'} ${isCurrent && isGameOver ? 'floor-dead' : ''}`;
-            
+            floorItem.className = `route-floor-item ${item.className}`;
             floorItem.innerHTML = `
                 <div class="floor-dot"></div>
-                <div class="floor-label">${item.name} ${isCurrent ? '（現在地）' : ''}</div>
+                <div class="floor-label">${item.name}</div>
             `;
-
             scrollLayer.appendChild(floorItem);
 
-            if (isCurrent) {
-                activeElement = floorItem;
-            }
-
-            // コネクターを必ずフロアアイテムの間に挟んで生成する
-            if (index < displayList.length - 1) {
+            // 要素間にコネクターを接続
+            if (index < itemsToRender.length - 1) {
                 const connector = document.createElement('div');
-                connector.className = 'floor-connector connector-active';
+                const isPassedConn = index < itemsToRender.length - 2;
+                connector.className = `floor-connector ${isPassedConn ? 'connector-active' : ''}`;
                 scrollLayer.appendChild(connector);
             }
         });
 
         routeMapContainer.appendChild(scrollLayer);
 
+        // ゲーム画面切り替え時は即座にオートスクロールを上端（最新の位置）へ戻す
         setTimeout(() => {
-            if (activeElement) {
-                scrollLayer.scrollTop = activeElement.offsetTop - (scrollLayer.clientHeight / 2) + (activeElement.clientHeight / 2);
-            }
-        }, 30);
+            scrollLayer.scrollTop = 0;
+        }, 10);
     }
 }
 
