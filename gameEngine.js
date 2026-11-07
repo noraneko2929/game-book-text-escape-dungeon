@@ -1,18 +1,18 @@
 /**
  * gameEngine.js
- * ゲームの描画・状態管理ライブラリ（下から上への縦積み・深層選択肢別積み上げ対応版）
+ * ゲームの描画・状態管理ライブラリ（中央固定・レイヤー全体スクロール・完全修正版）
  */
 class EscapeGameEngine {
     constructor(storyData, config = {}) {
         this.storyData = storyData;
         this.textDisplayId = config.textDisplayId || 'text-display';
         this.choiceDisplayId = config.choiceDisplayId || 'choice-display';
-        this.statusBadgeId = config.statusBadgeId || 'status-badge'; // 右上バッジは非表示/ボタン用に転用
+        this.statusBadgeId = config.statusBadgeId || 'status-badge';
         this.startSceneKey = config.startSceneKey || 'start';
-        this.saveKey = config.saveKey + '_v3';
-        this.checkpointKey = config.saveKey + '_checkpoint_v3';
-        this.historyKey = config.saveKey + '_history_v3';
-        this.revealedKey = config.saveKey + '_revealed_v3';
+        this.saveKey = config.saveKey + '_v4';
+        this.checkpointKey = config.saveKey + '_checkpoint_v4';
+        this.historyKey = config.saveKey + '_history_v4';
+        this.revealedKey = config.saveKey + '_revealed_v4';
     }
 
     init() {
@@ -25,9 +25,6 @@ class EscapeGameEngine {
         this.renderScene(targetScene);
     }
 
-    // シーンからマップ用の一意のノード項目を生成する
-    // 深層（第20階層開始〜第16階層境界まで）は選択肢（シーンID）ごとに積み上げる
-    // 中層・上層は階層単位で積み上げる
     getMapNodeItem(sceneKey, scene) {
         if (sceneKey === 'escape_true') return { id: 'escape', name: '地上（生還）' };
 
@@ -39,12 +36,11 @@ class EscapeGameEngine {
             }
         }
 
-        // 深層（第20階層〜第16階層、およびスタート地点等）は選択肢/シーンごとに個別表示
         let displayName = scene.status || sceneKey;
         return { id: sceneKey, name: displayName };
     }
 
-    // どのエリアに属するかを判定（ゲームオーバー時の正しいリトライ先決定用）
+    // 正確なエリア判定（リトライ時の誤動作防止）
     getAreaType(sceneKey) {
         if (sceneKey.startsWith('f10') || sceneKey.startsWith('f9') || sceneKey.startsWith('f8') || 
             sceneKey.startsWith('f7') || sceneKey.startsWith('f6') || sceneKey.startsWith('f5') || 
@@ -59,7 +55,6 @@ class EscapeGameEngine {
         return 'deep'; // 深層
     }
 
-    // 各エリアのチェックポイント（最初）のシーンキーを返す
     getAreaCheckpoint(areaType) {
         switch(areaType) {
             case 'upper': return 'f10_p1';
@@ -99,7 +94,7 @@ class EscapeGameEngine {
             localStorage.setItem(this.checkpointKey, currentArea);
         }
 
-        // 履歴に追加（重複追加防止、下から上へ積み上げるため配列に追加）
+        // 履歴に追加
         if (!isGameOver) {
             const lastItem = this.routeHistory[this.routeHistory.length - 1];
             if (!lastItem || lastItem.id !== nodeItem.id) {
@@ -114,7 +109,7 @@ class EscapeGameEngine {
         const textDisplay = document.getElementById(this.textDisplayId);
         if (textDisplay) textDisplay.innerHTML = scene.text;
 
-        // 右上バッジ部分を「最初からやり直す」ボタンに変更
+        // 右上ヘッダーに「最初からやり直す」ボタン配置
         const statusBadge = document.getElementById(this.statusBadgeId);
         if (statusBadge) {
             statusBadge.innerHTML = '';
@@ -153,8 +148,8 @@ class EscapeGameEngine {
                 choiceDisplay.appendChild(button);
             });
         } else if (!isEnding) {
-            // 【ゲームオーバー時】所属エリアの最初へ正確に戻るリトライボタン
-            const savedArea = localStorage.getItem(this.checkpointKey) || 'deep';
+            // 【ゲームオーバー時】正しいセーブエリアからリトライ
+            const savedArea = localStorage.getItem(this.checkpointKey) || currentArea;
             const retryTarget = this.getAreaCheckpoint(savedArea);
 
             const checkpointBtn = document.createElement('button');
@@ -173,11 +168,10 @@ class EscapeGameEngine {
             choiceDisplay.appendChild(endingMsg);
         }
 
-        // 下から上への縦積みマップ描画
+        // マップ描画（3スロット固定・現在地中央表示）
         this.renderRouteMap(nodeItem.id, isGameOver);
     }
 
-    // 下から上へ積み上がる筒状マップを描画する関数
     renderRouteMap(currentNodeId, isGameOver) {
         let routeMapContainer = document.getElementById('route-map-container');
         if (!routeMapContainer) {
@@ -192,58 +186,51 @@ class EscapeGameEngine {
 
         const mapTitle = document.createElement('div');
         mapTitle.className = 'route-map-title';
-        mapTitle.innerText = '🗺️ 通過ルート（下から上へ積み上げ）';
+        mapTitle.innerText = '🗺️ 探索ルートマップ（中央固定・全体スクロール）';
         routeMapContainer.appendChild(mapTitle);
 
-        const scrollWrapper = document.createElement('div');
-        scrollWrapper.className = 'route-scroll-wrapper';
+        const scrollLayer = document.createElement('div');
+        scrollLayer.className = 'route-scroll-layer';
 
-        // 履歴が空の場合は現在のノードを1つだけ表示
         let displayList = [...this.routeHistory];
         if (displayList.length === 0) {
             const currentScene = this.storyData[currentNodeId] || {};
             displayList = [{ id: currentNodeId, name: currentScene.status || '未知の最深部（落下直後）' }];
         }
 
-        let activeElement = null;
+        // 3つ分のスロット（下・真ん中・上）を確保するため、ダミーを含めて構築
+        // 現在地が常に真ん中に来るようにパディングまたはスロットを配置する
+        let currentIndex = displayList.findIndex(item => item.id === currentNodeId);
+        if (currentIndex === -1) currentIndex = displayList.length - 1;
 
-        // 下から上へ積み上げるため、古いものを下、新しいものを上へ並べる
-        displayList.forEach((item, index) => {
-            const floorNode = document.createElement('div');
-            floorNode.className = 'route-floor-item';
+        // 下スロット用（過去）、真ん中（現在地）、上スロット用（未来/未到達）
+        const prevItem = currentIndex > 0 ? displayList[currentIndex - 1] : null;
+        const currentItem = displayList[currentIndex];
+        const nextItem = currentIndex < displayList.length - 1 ? displayList[currentIndex + 1] : null;
 
-            const isCurrent = (item.id === currentNodeId);
-
-            if (isCurrent) {
-                floorNode.classList.add('floor-current');
-                if (isGameOver) floorNode.classList.add('floor-dead');
-                activeElement = floorNode;
-            } else {
-                floorNode.classList.add('floor-passed');
-            }
-
-            floorNode.innerHTML = `
+        scrollLayer.innerHTML = `
+            <!-- 上スロット（未来または空白） -->
+            <div class="route-floor-item ${nextItem ? 'floor-passed' : 'floor-empty'}">
                 <div class="floor-dot"></div>
-                <div class="floor-label">${item.name} ${isCurrent ? '（現在地）' : ''}</div>
-            `;
+                <div class="floor-label">${nextItem ? nextItem.name : '？？？'}</div>
+            </div>
+            <div class="floor-connector ${nextItem ? 'connector-active' : ''}"></div>
 
-            scrollWrapper.appendChild(floorNode);
+            <!-- 真ん中スロット（現在地：常に中央に固定表示） -->
+            <div class="route-floor-item floor-current ${isGameOver ? 'floor-dead' : ''}">
+                <div class="floor-dot"></div>
+                <div class="floor-label">${currentItem.name} （現在地）</div>
+            </div>
+            <div class="floor-connector ${prevItem ? 'connector-active' : ''}"></div>
 
-            if (index < displayList.length - 1) {
-                const connector = document.createElement('div');
-                connector.className = 'floor-connector connector-active';
-                scrollWrapper.appendChild(connector);
-            }
-        });
+            <!-- 下スロット（過去） -->
+            <div class="route-floor-item ${prevItem ? 'floor-passed' : 'floor-empty'}">
+                <div class="floor-dot"></div>
+                <div class="floor-label">${prevItem ? prevItem.name : 'スタート'}</div>
+            </div>
+        `;
 
-        routeMapContainer.appendChild(scrollWrapper);
-
-        // 常に現在位置が中央に見えるようにスクロール位置を自動調整
-        setTimeout(() => {
-            if (activeElement) {
-                scrollWrapper.scrollTop = activeElement.offsetTop - scrollWrapper.clientHeight / 2 + activeElement.clientHeight / 2;
-            }
-        }, 50);
+        routeMapContainer.appendChild(scrollLayer);
     }
 }
 
