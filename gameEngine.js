@@ -1,6 +1,6 @@
 /**
  * gameEngine.js
- * ゲームの描画・状態管理ライブラリ（バージョンなしクリーンキー対応版）
+ * ゲームの描画・状態管理ライブラリ（クリア判定の修正版）
  */
 class EscapeGameEngine {
     constructor(storyData, config = {}) {
@@ -111,10 +111,21 @@ class EscapeGameEngine {
         this.updateCheckpoint(sceneKey);
 
         const nodeItem = this.getMapNodeItem(sceneKey, scene);
-        const isGameOver = !scene.choices || scene.choices.length === 0;
+        const isEnding = sceneKey.startsWith('escape_');
+        // 生還（エンディング）時は choices がなくてもゲームオーバーとみなさない
+        const isGameOver = (!scene.choices || scene.choices.length === 0) && !isEnding;
 
         let isNewFloorAdvanced = false;
-        if (!isGameOver) {
+        if (!isGameOver && !isEnding) {
+            localStorage.setItem(this.saveKey, sceneKey);
+            if (!oldLastItem || oldLastItem.id !== nodeItem.id) {
+                if (oldLastItem) {
+                    isNewFloorAdvanced = true;
+                }
+                this.routeHistory.push(nodeItem);
+                localStorage.setItem(this.historyKey, JSON.stringify(this.routeHistory));
+            }
+        } else if (isEnding) {
             localStorage.setItem(this.saveKey, sceneKey);
             if (!oldLastItem || oldLastItem.id !== nodeItem.id) {
                 if (oldLastItem) {
@@ -154,7 +165,6 @@ class EscapeGameEngine {
         choiceDisplay.innerHTML = '';
 
         const hasChoices = scene.choices && scene.choices.length > 0;
-        const isEnding = sceneKey.startsWith('escape_');
 
         if (hasChoices) {
             scene.choices.forEach(choice => {
