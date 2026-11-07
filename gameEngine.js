@@ -142,9 +142,9 @@ class EscapeGameEngine {
             statusBadge.innerHTML = '';
             const headerResetBtn = document.createElement('button');
             headerResetBtn.className = 'btn-small-reset';
-            headerResetBtn.innerText = '最初からやり直す';
+            headerResetBtn.innerText = '最初から';
             headerResetBtn.onclick = () => {
-                if (confirm('最初からやり直しますか？（セーブデータと記録が削除されます）')) {
+                if (confirm('最初からやり直しますか？（記録が削除されます）')) {
                     localStorage.removeItem(this.saveKey);
                     localStorage.removeItem(this.historyKey);
                     localStorage.removeItem(this.checkpointKey);
@@ -217,7 +217,7 @@ class EscapeGameEngine {
 
         const mapTitle = document.createElement('div');
         mapTitle.className = 'route-map-title';
-        mapTitle.innerText = '🗺️ 階層探索マップ';
+        mapTitle.innerText = '階層探索マップ';
         routeMapContainer.appendChild(mapTitle);
 
         const scrollLayer = document.createElement('div');
