@@ -1,6 +1,6 @@
 /**
  * gameEngine.js
- * ゲームの描画・状態管理ライブラリ（スムーズ同期スクロール＆クリアカラー対応版）
+ * ゲームの描画・状態管理ライブラリ（バージョンなしクリーンキー対応版）
  */
 class EscapeGameEngine {
     constructor(storyData, config = {}) {
@@ -9,10 +9,12 @@ class EscapeGameEngine {
         this.choiceDisplayId = config.choiceDisplayId || 'choice-display';
         this.statusBadgeId = config.statusBadgeId || 'status-badge';
         this.startSceneKey = config.startSceneKey || 'start';
-        this.saveKey = (config.saveKey || 'escape_game') + '_save_rank';
-        this.historyKey = (config.saveKey || 'escape_game') + '_history_v28';
-        this.checkpointKey = (config.saveKey || 'escape_game') + '_checkpoint_v28';
-        this.revealedKey = (config.saveKey || 'escape_game') + '_revealed_v28';
+        
+        const baseKey = config.saveKey || 'escape_game';
+        this.saveKey = baseKey + '_save';
+        this.historyKey = baseKey + '_history';
+        this.checkpointKey = baseKey + '_checkpoint';
+        this.revealedKey = baseKey + '_revealed';
         this.isAnimating = false;
     }
 
@@ -299,13 +301,12 @@ class EscapeGameEngine {
         const maxScrollableHeight = scrollLayer.scrollHeight - scrollLayer.clientHeight;
 
         if (animateAdvance && maxScrollableHeight > 0) {
-            // スクロールが必要な場合（3→4以降）：1ステップ分下からスタートし、イージングでなめらかに同期スクロール
             scrollLayer.scrollTop = itemStepHeight;
 
             const startPos = scrollLayer.scrollTop;
             const targetPos = 0;
             const distance = targetPos - startPos;
-            const duration = 450; // ミリ秒（よりスムーズでキビキビとした速度感）
+            const duration = 450;
             let startTime = null;
 
             const easeOutCubic = t => 1 - Math.pow(1 - t, 3);
@@ -321,7 +322,6 @@ class EscapeGameEngine {
                 if (progress < 1) {
                     requestAnimationFrame(scrollAnimation);
                 } else {
-                    // スクロール完了と同時に正確に正式名称へ書き換える
                     const topItems = scrollLayer.querySelectorAll('.route-floor-item');
                     const targetItem = topItems.length > 1 ? topItems[1] : topItems[0];
                     
@@ -351,7 +351,6 @@ class EscapeGameEngine {
             requestAnimationFrame(scrollAnimation);
 
         } else if (animateAdvance) {
-            // スクロール不要な場合（2→3など）：カクつかせず自然なタイミングでラベルを切り替え
             setTimeout(() => {
                 const topItems = scrollLayer.querySelectorAll('.route-floor-item');
                 const targetItem = topItems.length > 1 ? topItems[1] : topItems[0];
