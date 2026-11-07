@@ -1,6 +1,6 @@
 /**
  * gameEngine.js
- * ゲームの描画・状態管理ライブラリ
+ * セーブ機能および「最初からやり直す」時のセーブデータ削除を実装したゲームエンジン
  */
 class EscapeGameEngine {
     constructor(storyData, config = {}) {
@@ -9,10 +9,14 @@ class EscapeGameEngine {
         this.choiceDisplayId = config.choiceDisplayId || 'choice-display';
         this.statusBadgeId = config.statusBadgeId || 'status-badge';
         this.startSceneKey = config.startSceneKey || 'start';
+        this.saveKey = config.saveKey || 'lab_escape_save_scene';
     }
 
     init() {
-        this.renderScene(this.startSceneKey);
+        // 保存されたセーブデータがあればそこから再開、なければスタートシーンへ
+        const savedScene = localStorage.getItem(this.saveKey);
+        const targetScene = (savedScene && this.storyData[savedScene]) ? savedScene : this.startSceneKey;
+        this.renderScene(targetScene);
     }
 
     renderScene(sceneKey) {
@@ -21,6 +25,9 @@ class EscapeGameEngine {
             console.error(`Scene not found: ${sceneKey}`);
             return;
         }
+
+        // 現在のシーンをLocalStorageに自動セーブ
+        localStorage.setItem(this.saveKey, sceneKey);
 
         // テキスト・ステータス表示の更新
         const textDisplay = document.getElementById(this.textDisplayId);
@@ -44,14 +51,18 @@ class EscapeGameEngine {
                 button.onclick = () => this.renderScene(choice.next);
                 choiceDisplay.appendChild(button);
             });
-        } else {
-            // エンディング時のリトライボタン
-            const retryBtn = document.createElement('button');
-            retryBtn.className = 'btn btn-reset';
-            retryBtn.innerText = '最初からやり直す（リトライ）';
-            retryBtn.onclick = () => this.renderScene(this.startSceneKey);
-            choiceDisplay.appendChild(retryBtn);
         }
+
+        // エンディングやゲームオーバーに関わらず、常に「最初からやり直す」ボタンを常時表示する
+        const retryBtn = document.createElement('button');
+        retryBtn.className = 'btn btn-reset';
+        retryBtn.innerText = '最初からやり直す（セーブ削除）';
+        retryBtn.onclick = () => {
+            // やり直す場合はセーブデータを削除して最初から再開
+            localStorage.removeItem(this.saveKey);
+            this.renderScene(this.startSceneKey);
+        };
+        choiceDisplay.appendChild(retryBtn);
     }
 }
 
