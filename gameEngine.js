@@ -1,6 +1,6 @@
 /**
  * gameEngine.js
- * ゲームの描画・状態管理ライブラリ（中央固定・レイヤー全体スクロール・完全修正版）
+ * ゲームの描画・状態管理ライブラリ（ランク別セーブ・リトライ完全対応版）
  */
 class EscapeGameEngine {
     constructor(storyData, config = {}) {
@@ -9,10 +9,10 @@ class EscapeGameEngine {
         this.choiceDisplayId = config.choiceDisplayId || 'choice-display';
         this.statusBadgeId = config.statusBadgeId || 'status-badge';
         this.startSceneKey = config.startSceneKey || 'start';
-        this.saveKey = config.saveKey + '_v4';
-        this.checkpointKey = config.saveKey + '_checkpoint_v4';
-        this.historyKey = config.saveKey + '_history_v4';
-        this.revealedKey = config.saveKey + '_revealed_v4';
+        this.saveKey = config.saveKey + '_v5';
+        this.rankKey = config.saveKey + '_rank_checkpoint_v5';
+        this.historyKey = config.saveKey + '_history_v5';
+        this.revealedKey = config.saveKey + '_revealed_v5';
     }
 
     init() {
@@ -40,40 +40,71 @@ class EscapeGameEngine {
         return { id: sceneKey, name: displayName };
     }
 
-    // 正確なエリア判定（リトライ時の誤動作防止）
-    getAreaType(sceneKey) {
+    // シーンキーや階層から、正確な「階層ランク（deep / mid / upper）」を判定する
+    getSceneRank(sceneKey) {
+        // 上層：第10層〜第1層、およびエスケープ
         if (sceneKey.startsWith('f10') || sceneKey.startsWith('f9') || sceneKey.startsWith('f8') || 
             sceneKey.startsWith('f7') || sceneKey.startsWith('f6') || sceneKey.startsWith('f5') || 
             sceneKey.startsWith('f4') || sceneKey.startsWith('f3') || sceneKey.startsWith('f2') || 
             sceneKey.startsWith('f1') || sceneKey.startsWith('escape')) {
-            return 'upper'; // 上層
+            return 'upper';
         }
+        
+        // 中層：第15層〜第11層（f15〜f11）
         if (sceneKey.startsWith('f15') || sceneKey.startsWith('f14') || sceneKey.startsWith('f13') || 
             sceneKey.startsWith('f12') || sceneKey.startsWith('f11')) {
-            return 'mid'; // 中層
+            return 'mid';
         }
-        return 'deep'; // 深層
+
+        // 深層：20〜16層（f20, f19, f18, f17, f16 および start 系）
+        return 'deep';
     }
 
-    getAreaCheckpoint(areaType) {
-        switch(areaType) {
-            case 'upper': return 'f10_p1';
-            case 'mid': return 'f15_p1';
-            case 'deep': 
-            default: return 'start';
+    // ご指定のルールに基づくリトライ先の決定
+    // ・15層に到達するまでは深層の初めからリトライ
+    // ・10層に到達するまでは15層からリトライ
+    getRetryTargetScene(currentRank, hasReachedF15) {
+        if (currentRank === 'upper') {
+            // 上層（10層〜1層）にいる場合
+            // 10層に到達していれば15層（中層初め）から、していなければ深層から等の制御
+            if (this.hasReachedF10()) {
+                return 'f15_p1'; // 10層到達後は15層から
+            } else {
+                return 'start'; // 到達していなければ深層初め
+            }
+        } else if (currentRank === 'mid') {
+            // 中層（15層〜11層）にいる場合
+            // 15層に到達するまでは深層の初めから
+            if (this.hasReachedF15) {
+                return 'f15_p1'; // 15層の初め
+            } else {
+                return 'start';
+            }
+        } else {
+            // 深層（20〜16層）
+            return 'start';
         }
     }
 
-    checkF15Reached(sceneKey) {
-        if (sceneKey.startsWith('f15') || sceneKey.startsWith('f14') || sceneKey.startsWith('f13') || 
-            sceneKey.startsWith('f12') || sceneKey.startsWith('f11') || sceneKey.startsWith('f10') || 
-            sceneKey.startsWith('f9') || sceneKey.startsWith('f8') || sceneKey.startsWith('f7') || 
-            sceneKey.startsWith('f6') || sceneKey.startsWith('f5') || sceneKey.startsWith('f4') || 
-            sceneKey.startsWith('f3') || sceneKey.startsWith('f2') || sceneKey.startsWith('f1') || 
-            sceneKey === 'escape_true') {
+    // 15層以上に到達したことがあるか判定
+    checkReachedMilestones(sceneKey) {
+        const match = sceneKey.match(/^f(\d+)/);
+        if (match) {
+            const floorNum = parseInt(match[1], 10);
+            if (floorNum <= 15) {
+                this.hasReachedF15 = true;
+                localStorage.setItem(this.revealedKey, 'true');
+            }
+        }
+        if (sceneKey === 'escape_true') {
             this.hasReachedF15 = true;
             localStorage.setItem(this.revealedKey, 'true');
         }
+    }
+
+    hasReachedF10() {
+        // 上層のシーン（f10以降）を踏んでいるか履歴からチェック
+        return this.routeHistory.some(item => item.id.startsWith('f10') || item.id.startsWith('f9') || item.id.startsWith('f8') || item.id.startsWith('f7') || item.id.startsWith('f6') || item.id.startsWith('f5') || item.id.startsWith('f4') || item.id.startsWith('f3') || item.id.startsWith('f2') || item.id.startsWith('f1'));
     }
 
     renderScene(sceneKey) {
@@ -83,15 +114,16 @@ class EscapeGameEngine {
             return;
         }
 
-        this.checkF15Reached(sceneKey);
+        this.checkReachedMilestones(sceneKey);
 
         const nodeItem = this.getMapNodeItem(sceneKey, scene);
         const isGameOver = !scene.choices || scene.choices.length === 0;
-        const currentArea = this.getAreaType(sceneKey);
+        const currentRank = this.getSceneRank(sceneKey);
 
-        // チェックポイント（エリアの最初）を保存
+        // ランクごとにセーブ（最後に到達したランクとシーンを保存）
         if (!isGameOver) {
-            localStorage.setItem(this.checkpointKey, currentArea);
+            localStorage.setItem(this.checkpointKey, currentRank);
+            localStorage.setItem(this.saveKey, sceneKey);
         }
 
         // 履歴に追加
@@ -102,8 +134,6 @@ class EscapeGameEngine {
                 localStorage.setItem(this.historyKey, JSON.stringify(this.routeHistory));
             }
         }
-
-        localStorage.setItem(this.saveKey, sceneKey);
 
         // テキスト表示
         const textDisplay = document.getElementById(this.textDisplayId);
@@ -148,13 +178,22 @@ class EscapeGameEngine {
                 choiceDisplay.appendChild(button);
             });
         } else if (!isEnding) {
-            // 【ゲームオーバー時】正しいセーブエリアからリトライ
-            const savedArea = localStorage.getItem(this.checkpointKey) || currentArea;
-            const retryTarget = this.getAreaCheckpoint(savedArea);
+            // 【ゲームオーバー時】ランク別ルールに従ってリトライ先を決定
+            let retryTarget = 'start';
+            if (currentRank === 'upper') {
+                // 上層で死亡：10層に到達するまでは15層から、以降は上層初め（f10_p1）
+                retryTarget = this.hasReachedF10() ? 'f10_p1' : 'f15_p1';
+            } else if (currentRank === 'mid') {
+                // 中層で死亡：15層に到達するまでは深層の初めから、以降は15層初め（f15_p1）
+                retryTarget = this.hasReachedF15 ? 'f15_p1' : 'start';
+            } else {
+                // 深層で死亡：深層の初めから
+                retryTarget = 'start';
+            }
 
             const checkpointBtn = document.createElement('button');
             checkpointBtn.className = 'btn btn-retry';
-            checkpointBtn.innerText = 'このエリアの最初からやり直す';
+            checkpointBtn.innerText = 'ランク規定位置からやり直す';
             checkpointBtn.onclick = () => {
                 this.renderScene(retryTarget);
             };
@@ -168,7 +207,6 @@ class EscapeGameEngine {
             choiceDisplay.appendChild(endingMsg);
         }
 
-        // マップ描画（3スロット固定・現在地中央表示）
         this.renderRouteMap(nodeItem.id, isGameOver);
     }
 
@@ -198,32 +236,26 @@ class EscapeGameEngine {
             displayList = [{ id: currentNodeId, name: currentScene.status || '未知の最深部（落下直後）' }];
         }
 
-        // 3つ分のスロット（下・真ん中・上）を確保するため、ダミーを含めて構築
-        // 現在地が常に真ん中に来るようにパディングまたはスロットを配置する
         let currentIndex = displayList.findIndex(item => item.id === currentNodeId);
         if (currentIndex === -1) currentIndex = displayList.length - 1;
 
-        // 下スロット用（過去）、真ん中（現在地）、上スロット用（未来/未到達）
         const prevItem = currentIndex > 0 ? displayList[currentIndex - 1] : null;
         const currentItem = displayList[currentIndex];
         const nextItem = currentIndex < displayList.length - 1 ? displayList[currentIndex + 1] : null;
 
         scrollLayer.innerHTML = `
-            <!-- 上スロット（未来または空白） -->
             <div class="route-floor-item ${nextItem ? 'floor-passed' : 'floor-empty'}">
                 <div class="floor-dot"></div>
                 <div class="floor-label">${nextItem ? nextItem.name : '？？？'}</div>
             </div>
             <div class="floor-connector ${nextItem ? 'connector-active' : ''}"></div>
 
-            <!-- 真ん中スロット（現在地：常に中央に固定表示） -->
             <div class="route-floor-item floor-current ${isGameOver ? 'floor-dead' : ''}">
                 <div class="floor-dot"></div>
                 <div class="floor-label">${currentItem.name} （現在地）</div>
             </div>
             <div class="floor-connector ${prevItem ? 'connector-active' : ''}"></div>
 
-            <!-- 下スロット（過去） -->
             <div class="route-floor-item ${prevItem ? 'floor-passed' : 'floor-empty'}">
                 <div class="floor-dot"></div>
                 <div class="floor-label">${prevItem ? prevItem.name : 'スタート'}</div>
