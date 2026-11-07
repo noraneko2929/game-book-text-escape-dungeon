@@ -78,6 +78,7 @@ body {
     -ms-overflow-style: none;
     scrollbar-width: none;
     scroll-behavior: smooth;
+    position: relative;
 }
 
 .route-scroll-layer::-webkit-scrollbar {
@@ -158,11 +159,13 @@ body {
     background-color: #f44336;
 }
 
+/* コネクターを確実に中央揃えにするための修正 */
 .floor-connector {
     width: 2px;
     height: 14px;
     background-color: #3f3f4f;
     flex-shrink: 0;
+    align-self: center;
     transition: background-color 0.3s ease;
 }
 
