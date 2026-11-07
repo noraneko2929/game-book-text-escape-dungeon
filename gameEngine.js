@@ -1,6 +1,10 @@
 /**
  * gameEngine.js
  * ゲームの描画・状態管理ライブラリ
+ * - 自動セーブ・ロード機能
+ * - ゲームオーバー時は「階層の最初（フロアの起点）」からやり直す
+ * - エンディング時は直前のやり直しボタンを表示しない
+ * - 「最初からやり直す」ボタンの常時表示（小型ボタン）
  */
 class EscapeGameEngine {
     constructor(storyData, config = {}) {
@@ -11,30 +15,35 @@ class EscapeGameEngine {
         this.startSceneKey = config.startSceneKey || 'start';
         this.saveKey = config.saveKey || 'escape_game_current_scene';
         this.checkpointKey = config.saveKey + '_checkpoint';
-        this.lastSceneKey = null;
     }
 
     init() {
-        // 保存されたセーブデータがあればロード、なければ最初から
         const savedScene = localStorage.getItem(this.saveKey);
         const targetScene = (savedScene && this.storyData[savedScene]) ? savedScene : this.startSceneKey;
-        this.renderScene(targetScene, false);
+        this.renderScene(targetScene);
     }
 
-    renderScene(sceneKey, isUserChoice = true) {
+    // シーンが階層の最初（フロアの起点）かどうかを判定
+    isFloorStart(sceneKey) {
+        if (sceneKey === 'start') return true;
+        if (sceneKey.endsWith('_p1')) return true;
+        return false;
+    }
+
+    renderScene(sceneKey) {
         const scene = this.storyData[sceneKey];
         if (!scene) {
             console.error(`Scene not found: ${sceneKey}`);
             return;
         }
 
-        // 選択肢がある通常シーンへの遷移時、直前の選択肢（チェックポイント）を更新
-        if (isUserChoice && this.lastSceneKey && this.storyData[this.lastSceneKey]?.choices?.length > 0) {
-            localStorage.setItem(this.checkpointKey, this.lastSceneKey);
-        }
-
-        // 現在のシーンキーをLocalStorageに自動保存
+        // 現在のシーンをLocalStorageに自動セーブ
         localStorage.setItem(this.saveKey, sceneKey);
+
+        // 階層の最初（フロアの起点）であれば、チェックポイントを更新
+        if (this.isFloorStart(sceneKey)) {
+            localStorage.setItem(this.checkpointKey, sceneKey);
+        }
 
         // テキスト・ステータス表示の更新
         const textDisplay = document.getElementById(this.textDisplayId);
@@ -50,6 +59,7 @@ class EscapeGameEngine {
         choiceDisplay.innerHTML = '';
 
         const hasChoices = scene.choices && scene.choices.length > 0;
+        const isEnding = sceneKey.startsWith('escape_');
 
         if (hasChoices) {
             // 通常の選択肢ボタンの動的生成
@@ -58,23 +68,30 @@ class EscapeGameEngine {
                 button.className = 'btn';
                 button.innerText = choice.text;
                 button.onclick = () => {
-                    this.lastSceneKey = sceneKey;
-                    this.renderScene(choice.next, true);
+                    this.renderScene(choice.next);
                 };
                 choiceDisplay.appendChild(button);
             });
-        } else {
-            // 【ゲームオーバー/エンディング時】直前の選択肢（チェックポイント）へ戻るボタン
-            const lastCheckpoint = localStorage.getItem(this.checkpointKey);
-            const retryTarget = (lastCheckpoint && this.storyData[lastCheckpoint]) ? lastCheckpoint : this.startSceneKey;
+        } else if (!isEnding) {
+            // 【ゲームオーバー時】現在の階層の最初（フロアの起点）へ戻るボタン
+            const floorCheckpoint = localStorage.getItem(this.checkpointKey);
+            const retryTarget = (floorCheckpoint && this.storyData[floorCheckpoint]) ? floorCheckpoint : this.startSceneKey;
 
             const checkpointBtn = document.createElement('button');
             checkpointBtn.className = 'btn btn-retry';
-            checkpointBtn.innerText = '直前の選択肢からやり直す';
+            checkpointBtn.innerText = 'この階層の最初からやり直す';
             checkpointBtn.onclick = () => {
-                this.renderScene(retryTarget, false);
+                this.renderScene(retryTarget);
             };
             choiceDisplay.appendChild(checkpointBtn);
+        } else {
+            // 【エンディング時】直前のやり直しは非表示にし、クリアメッセージを表示
+            const endingMsg = document.createElement('div');
+            endingMsg.style.color = '#4caf50';
+            endingMsg.style.marginBottom = '10px';
+            endingMsg.style.fontWeight = 'bold';
+            endingMsg.innerText = 'おめでとうございます！生還を達成しました。';
+            choiceDisplay.appendChild(endingMsg);
         }
 
         // 画面最下部に「最初からやり直す（セーブデータ削除）」ボタンを小さく常時表示
@@ -88,8 +105,7 @@ class EscapeGameEngine {
             if (confirm('最初からやり直しますか？（現在のセーブデータは削除されます）')) {
                 localStorage.removeItem(this.saveKey);
                 localStorage.removeItem(this.checkpointKey);
-                this.lastSceneKey = null;
-                this.renderScene(this.startSceneKey, false);
+                this.renderScene(this.startSceneKey);
             }
         };
 
