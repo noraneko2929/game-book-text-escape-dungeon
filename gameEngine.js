@@ -1,6 +1,6 @@
 /**
  * gameEngine.js
- * ゲームの描画・状態管理ライブラリ（全履歴積み上げ＆縦スクロール対応修正版）
+ * ゲームの描画・状態管理ライブラリ（ランク別セーブ・リトライ完全修正版）
  */
 class EscapeGameEngine {
     constructor(storyData, config = {}) {
@@ -9,10 +9,11 @@ class EscapeGameEngine {
         this.choiceDisplayId = config.choiceDisplayId || 'choice-display';
         this.statusBadgeId = config.statusBadgeId || 'status-badge';
         this.startSceneKey = config.startSceneKey || 'start';
-        this.saveKey = config.saveKey + '_v7';
-        this.checkpointKey = config.saveKey + '_rank_checkpoint_v7';
-        this.historyKey = config.saveKey + '_history_v7';
-        this.revealedKey = config.saveKey + '_revealed_v7';
+        this.saveKey = config.saveKey + '_v8';
+        this.rankKey = config.saveKey + '_rank_checkpoint_v8';
+        this.historyKey = config.saveKey + '_history_v8';
+        this.revealedKey = config.saveKey + '_revealed_v8';
+        this.reachedF10Key = config.saveKey + '_reached_f10_v8';
     }
 
     init() {
@@ -21,6 +22,7 @@ class EscapeGameEngine {
         
         this.routeHistory = JSON.parse(localStorage.getItem(this.historyKey) || '[]');
         this.hasReachedF15 = localStorage.getItem(this.revealedKey) === 'true';
+        this.hasReachedF10Flag = localStorage.getItem(this.reachedF10Key) === 'true';
 
         this.renderScene(targetScene);
     }
@@ -40,7 +42,9 @@ class EscapeGameEngine {
         return { id: sceneKey, name: displayName };
     }
 
+    // シーンキーから厳密にランク（upper / mid / deep）を判定する
     getSceneRank(sceneKey) {
+        // 上層：f10〜f1、および escape
         if (sceneKey.startsWith('f10') || sceneKey.startsWith('f9') || sceneKey.startsWith('f8') || 
             sceneKey.startsWith('f7') || sceneKey.startsWith('f6') || sceneKey.startsWith('f5') || 
             sceneKey.startsWith('f4') || sceneKey.startsWith('f3') || sceneKey.startsWith('f2') || 
@@ -48,11 +52,13 @@ class EscapeGameEngine {
             return 'upper';
         }
         
+        // 中層：f15〜f11
         if (sceneKey.startsWith('f15') || sceneKey.startsWith('f14') || sceneKey.startsWith('f13') || 
             sceneKey.startsWith('f12') || sceneKey.startsWith('f11')) {
             return 'mid';
         }
 
+        // 深層：それ以外（20〜16層、スタート等）
         return 'deep';
     }
 
@@ -64,20 +70,20 @@ class EscapeGameEngine {
                 this.hasReachedF15 = true;
                 localStorage.setItem(this.revealedKey, 'true');
             }
+            if (floorNum <= 10) {
+                this.hasReachedF10Flag = true;
+                localStorage.setItem(this.reachedF10Key, 'true');
+            }
         }
         if (sceneKey === 'escape_true') {
             this.hasReachedF15 = true;
+            this.hasReachedF10Flag = true;
             localStorage.setItem(this.revealedKey, 'true');
+            localStorage.setItem(this.reachedF10Key, 'true');
         }
     }
 
-    hasReachedF10() {
-        return this.routeHistory.some(item => {
-            const id = item.id;
-            return id.startsWith('f10') || id.startsWith('f9') || id.startsWith('f8') || id.startsWith('f7') || id.startsWith('f6') || id.startsWith('f5') || id.startsWith('f4') || id.startsWith('f3') || id.startsWith('f2') || id.startsWith('f1');
-        });
-    }
-
+    // リトライ時のマップ履歴巻き戻し同期
     syncHistoryUpTo(targetSceneKey) {
         const targetScene = this.storyData[targetSceneKey];
         if (!targetScene) return;
@@ -106,11 +112,11 @@ class EscapeGameEngine {
         const currentRank = this.getSceneRank(sceneKey);
 
         if (!isGameOver) {
-            localStorage.setItem(this.checkpointKey, currentRank);
+            localStorage.setItem(this.rankKey, currentRank);
             localStorage.setItem(this.saveKey, sceneKey);
         }
 
-        // 履歴に正しくノードを追加（重複を抑えつつ下から上へ積み上げるデータ）
+        // 履歴追加
         if (!isGameOver) {
             const lastItem = this.routeHistory[this.routeHistory.length - 1];
             if (!lastItem || lastItem.id !== nodeItem.id) {
@@ -131,11 +137,13 @@ class EscapeGameEngine {
             headerResetBtn.onclick = () => {
                 if (confirm('最初からやり直しますか？（セーブデータとルート記録が削除されます）')) {
                     localStorage.removeItem(this.saveKey);
-                    localStorage.removeItem(this.checkpointKey);
+                    localStorage.removeItem(this.rankKey);
                     localStorage.removeItem(this.historyKey);
                     localStorage.removeItem(this.revealedKey);
+                    localStorage.removeItem(this.reachedF10Key);
                     this.routeHistory = [];
                     this.hasReachedF15 = false;
+                    this.hasReachedF10Flag = false;
                     this.renderScene(this.startSceneKey);
                 }
             };
@@ -160,9 +168,13 @@ class EscapeGameEngine {
                 choiceDisplay.appendChild(button);
             });
         } else if (!isEnding) {
+            // 【ゲームオーバー時のリトライ先決定ルール】
+            // ・15層に到達するまでは深層の初めから
+            // ・10層に到達するまでは15層から
             let retryTarget = 'start';
+            
             if (currentRank === 'upper') {
-                retryTarget = this.hasReachedF10() ? 'f10_p1' : 'f15_p1';
+                retryTarget = this.hasReachedF10Flag ? 'f10_p1' : 'f15_p1';
             } else if (currentRank === 'mid') {
                 retryTarget = this.hasReachedF15 ? 'f15_p1' : 'start';
             } else {
@@ -189,7 +201,6 @@ class EscapeGameEngine {
         this.renderRouteMap(nodeItem.id, isGameOver);
     }
 
-    // 全履歴を下から上へ積み上げ、動的にスクロール可能にするマップ描画関数
     renderRouteMap(currentNodeId, isGameOver) {
         let routeMapContainer = document.getElementById('route-map-container');
         if (!routeMapContainer) {
@@ -218,7 +229,6 @@ class EscapeGameEngine {
 
         let activeElement = null;
 
-        // 全件ループにより、進んだ分だけ階層ノードとコネクターが増えるように修正
         displayList.forEach((item, index) => {
             const isCurrent = (item.id === currentNodeId || index === displayList.length - 1);
 
@@ -236,7 +246,6 @@ class EscapeGameEngine {
                 activeElement = floorItem;
             }
 
-            // アイテム同士を繋ぐ垂直コネクター（線）
             if (index < displayList.length - 1) {
                 const connector = document.createElement('div');
                 connector.className = 'floor-connector connector-active';
@@ -246,7 +255,6 @@ class EscapeGameEngine {
 
         routeMapContainer.appendChild(scrollLayer);
 
-        // 現在地へ視点を自動追従スクロール
         setTimeout(() => {
             if (activeElement) {
                 scrollLayer.scrollTop = activeElement.offsetTop - (scrollLayer.clientHeight / 2) + (activeElement.clientHeight / 2);
