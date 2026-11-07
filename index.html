@@ -124,6 +124,7 @@
     <div id="choice-display" class="choice-container"></div>
 </div>
 
+<!--
 <script>
     // ゲームの全シナリオデータ（データ構造を変更すれば、別ゲームの自動生成も容易です）
     const storyData = {
@@ -208,6 +209,11 @@
     // 最初の一歩を起動
     renderScene('start');
 </script>
+-->
 
+    <!-- 外部JavaScriptファイルの読み込み -->
+    <!-- ※必ず gameEngine.js より前に storyData.js を読み込んでください -->
+    <script src="storyData.js"></script>
+    <script src="gameEngine.js"></script>
 </body>
 </html>
