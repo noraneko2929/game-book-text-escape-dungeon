@@ -1,6 +1,6 @@
 /**
  * gameEngine.js
- * ゲームの描画・状態管理ライブラリ（ランク別セーブ・リトライ完全修正版）
+ * ゲームの描画・状態管理ライブラリ（ランク別セーブ・完全修復版）
  */
 class EscapeGameEngine {
     constructor(storyData, config = {}) {
@@ -9,11 +9,10 @@ class EscapeGameEngine {
         this.choiceDisplayId = config.choiceDisplayId || 'choice-display';
         this.statusBadgeId = config.statusBadgeId || 'status-badge';
         this.startSceneKey = config.startSceneKey || 'start';
-        this.saveKey = config.saveKey + '_v8';
-        this.rankKey = config.saveKey + '_rank_checkpoint_v8';
-        this.historyKey = config.saveKey + '_history_v8';
-        this.revealedKey = config.saveKey + '_revealed_v8';
-        this.reachedF10Key = config.saveKey + '_reached_f10_v8';
+        this.saveKey = config.saveKey + '_v9';
+        this.historyKey = config.saveKey + '_history_v9';
+        this.revealedKey = config.saveKey + '_revealed_v9';
+        this.reachedF10Key = config.saveKey + '_reached_f10_v9';
     }
 
     init() {
@@ -42,7 +41,7 @@ class EscapeGameEngine {
         return { id: sceneKey, name: displayName };
     }
 
-    // シーンキーから厳密にランク（upper / mid / deep）を判定する
+    // シーンキーから現在のランクを厳密に判定
     getSceneRank(sceneKey) {
         // 上層：f10〜f1、および escape
         if (sceneKey.startsWith('f10') || sceneKey.startsWith('f9') || sceneKey.startsWith('f8') || 
@@ -58,10 +57,11 @@ class EscapeGameEngine {
             return 'mid';
         }
 
-        // 深層：それ以外（20〜16層、スタート等）
+        // 深層：それ以外
         return 'deep';
     }
 
+    // 到達マイルストーンの更新と保存
     checkReachedMilestones(sceneKey) {
         const match = sceneKey.match(/^f(\d+)/);
         if (match) {
@@ -83,7 +83,6 @@ class EscapeGameEngine {
         }
     }
 
-    // リトライ時のマップ履歴巻き戻し同期
     syncHistoryUpTo(targetSceneKey) {
         const targetScene = this.storyData[targetSceneKey];
         if (!targetScene) return;
@@ -111,12 +110,11 @@ class EscapeGameEngine {
         const isGameOver = !scene.choices || scene.choices.length === 0;
         const currentRank = this.getSceneRank(sceneKey);
 
+        // ゲームオーバーでなければ現在のシーンをセーブ
         if (!isGameOver) {
-            localStorage.setItem(this.rankKey, currentRank);
             localStorage.setItem(this.saveKey, sceneKey);
         }
 
-        // 履歴追加
         if (!isGameOver) {
             const lastItem = this.routeHistory[this.routeHistory.length - 1];
             if (!lastItem || lastItem.id !== nodeItem.id) {
@@ -137,7 +135,6 @@ class EscapeGameEngine {
             headerResetBtn.onclick = () => {
                 if (confirm('最初からやり直しますか？（セーブデータとルート記録が削除されます）')) {
                     localStorage.removeItem(this.saveKey);
-                    localStorage.removeItem(this.rankKey);
                     localStorage.removeItem(this.historyKey);
                     localStorage.removeItem(this.revealedKey);
                     localStorage.removeItem(this.reachedF10Key);
@@ -168,11 +165,16 @@ class EscapeGameEngine {
                 choiceDisplay.appendChild(button);
             });
         } else if (!isEnding) {
-            // 【ゲームオーバー時のリトライ先決定ルール】
-            // ・15層に到達するまでは深層の初めから
-            // ・10層に到達するまでは15層から
+            // 【ご指定の厳密なリトライルール】
+            // 1. 上層（10〜1階層）でゲームオーバーした場合：
+            //    - 10層に到達していれば上層の初め（f10_p1）から
+            //    - 10層に到達していなければ中層の初め（f15_p1）から
+            // 2. 中層（15〜11階層）でゲームオーバーした場合：
+            //    - 15層に到達していれば中層の初め（f15_p1）から
+            //    - 15層に到達していなければ深層の初め（start）から
+            // 3. 深層でゲームオーバーした場合：深層の初め（start）から
             let retryTarget = 'start';
-            
+
             if (currentRank === 'upper') {
                 retryTarget = this.hasReachedF10Flag ? 'f10_p1' : 'f15_p1';
             } else if (currentRank === 'mid') {
