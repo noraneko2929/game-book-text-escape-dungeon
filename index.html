@@ -66,13 +66,15 @@
             font-weight: bold;
         }
 
+        /* 高さ130px：ちょうど3フロア＋コネクターが表示される高さ */
         .route-scroll-layer {
-            height: 150px;
+            height: 130px;
             overflow-y: auto;
             display: flex;
             flex-direction: column-reverse;
             align-items: center;
-            padding: 10px 0;
+            padding: 6px 0;
+            box-sizing: border-box;
             scroll-behavior: smooth;
         }
 
@@ -108,7 +110,7 @@
             text-overflow: ellipsis;
         }
 
-        /* 状態ごとのスタイル */
+        /* 過去に通過した階層 */
         .floor-passed {
             border-color: #4caf50;
             color: #ffffff;
@@ -117,6 +119,7 @@
             background-color: #4caf50;
         }
 
+        /* 現在地 */
         .floor-current {
             background-color: #1a2736;
             border-color: #2196f3;
@@ -129,6 +132,18 @@
             box-shadow: 0 0 6px #2196f3;
         }
 
+        /* 次の未到達階層（？？？） */
+        .floor-unknown {
+            background-color: #18181f;
+            border-color: #333340;
+            color: #666677;
+            opacity: 0.6;
+        }
+        .floor-unknown .floor-dot {
+            background-color: #444455;
+        }
+
+        /* 死亡時 */
         .floor-dead {
             background-color: #361a1a;
             border-color: #f44336;
@@ -140,8 +155,12 @@
         .floor-connector {
             width: 2px;
             height: 14px;
-            background-color: #4caf50;
+            background-color: #3f3f4f;
             flex-shrink: 0;
+        }
+
+        .connector-active {
+            background-color: #4caf50;
         }
 
         /* テキストエリア */
