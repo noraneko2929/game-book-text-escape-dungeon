@@ -1,6 +1,6 @@
 /**
  * gameEngine.js
- * ゲームの描画・状態管理ライブラリ（直感的なスクロールアニメーションステップ対応版）
+ * ゲームの描画・状態管理ライブラリ
  */
 class EscapeGameEngine {
     constructor(storyData, config = {}) {
@@ -10,9 +10,9 @@ class EscapeGameEngine {
         this.statusBadgeId = config.statusBadgeId || 'status-badge';
         this.startSceneKey = config.startSceneKey || 'start';
         this.saveKey = (config.saveKey || 'escape_game') + '_save_rank';
-        this.historyKey = (config.saveKey || 'escape_game') + '_history_v21';
-        this.checkpointKey = (config.saveKey || 'escape_game') + '_checkpoint_v21';
-        this.revealedKey = (config.saveKey || 'escape_game') + '_revealed_v21';
+        this.historyKey = (config.saveKey || 'escape_game') + '_history_v22';
+        this.checkpointKey = (config.saveKey || 'escape_game') + '_checkpoint_v22';
+        this.revealedKey = (config.saveKey || 'escape_game') + '_revealed_v22';
         this.isAnimating = false;
     }
 
@@ -239,7 +239,7 @@ class EscapeGameEngine {
             });
         }
 
-        // 2. 【中】現在地（displayListの最後尾）
+        // 2. 【中】現在地
         const currentItem = displayList[displayList.length - 1] || { id: currentNodeId, name: '現在地' };
         const currentSceneObj = this.storyData[currentItem.id] || {};
         const resolvedCurrent = this.getMapNodeItem(currentItem.id, currentSceneObj);
@@ -247,7 +247,6 @@ class EscapeGameEngine {
         let currentClass = isGameOver ? 'floor-current floor-dead' : 'floor-current';
         let labelText = `${resolvedCurrent.name}（現在地）`;
 
-        // 移動アニメーション実行中は、「（現在地）」を表示せず単なる「？？？ (未到達)」にしておく
         if (animateAdvance && currentItem.id === targetAnimatingId) {
             labelText = '？？？ (未到達)';
             currentClass = 'floor-unknown';
@@ -295,24 +294,18 @@ class EscapeGameEngine {
 
         routeMapContainer.appendChild(scrollLayer);
 
-        // 要素数判定（全DOM要素数）
-        // スクロール可能な領域の高さ（44pxはアイテム28px+コネクター14px+余白分）
-        const itemStepHeight = 44;
+        const itemStepHeight = 42;
         const maxScrollableHeight = scrollLayer.scrollHeight - scrollLayer.clientHeight;
 
         if (animateAdvance && maxScrollableHeight > 0) {
-            // 【3つ以上階層がある場合：指定通りのスクロール演出】
-            // ① DOM追加直後、スクロール位置をあらかじめ1ステップ分だけ下にずらしておく（トップじゃない状態にする）
             scrollLayer.scrollTop = itemStepHeight;
 
-            // ② スムーズスクロールで「トップ（0）」に向けてスクロールさせる
             setTimeout(() => {
                 scrollLayer.scrollTo({
                     top: 0,
                     behavior: 'smooth'
                 });
 
-                // ③ スクロールが完了してトップに移動したタイミングで、中央の要素を「（現在地）」と正式名称へ切り替える
                 setTimeout(() => {
                     const topItems = scrollLayer.querySelectorAll('.route-floor-item');
                     const targetItem = topItems.length > 1 ? topItems[1] : topItems[0];
@@ -321,59 +314,4 @@ class EscapeGameEngine {
                         const sceneObj = this.storyData[currentNodeId] || {};
                         const resolvedNode = this.getMapNodeItem(currentNodeId, sceneObj);
                         
-                        let finalClass = isGameOver ? 'route-floor-item floor-current floor-dead' : 'route-floor-item floor-current';
-                        targetItem.className = finalClass;
-                        targetItem.innerHTML = `
-                            <div class="floor-dot"></div>
-                            <div class="floor-label">${resolvedNode.name}（現在地）</div>
-                        `;
-
-                        const connectors = scrollLayer.querySelectorAll('.floor-connector');
-                        if (connectors.length > 0) {
-                            connectors[0].classList.add('connector-active');
-                        }
-                    }
-                    this.isAnimating = false;
-                }, 600);
-
-            }, 50);
-        } else if (animateAdvance) {
-            // 【2つの場合：スクロール領域が発生しないので、そのまま下へずれて表示切り替え】
-            setTimeout(() => {
-                const topItems = scrollLayer.querySelectorAll('.route-floor-item');
-                const targetItem = topItems.length > 1 ? topItems[1] : topItems[0];
-                
-                if (targetItem) {
-                    const sceneObj = this.storyData[currentNodeId] || {};
-                    const resolvedNode = this.getMapNodeItem(currentNodeId, sceneObj);
-                    
-                    let finalClass = isGameOver ? 'route-floor-item floor-current floor-dead' : 'route-floor-item floor-current';
-                    targetItem.className = finalClass;
-                    targetItem.innerHTML = `
-                        <div class="floor-dot"></div>
-                        <div class="floor-label">${resolvedNode.name}（現在地）</div>
-                    `;
-
-                    const connectors = scrollLayer.querySelectorAll('.floor-connector');
-                    if (connectors.length > 0) {
-                        connectors[0].classList.add('connector-active');
-                    }
-                }
-                this.isAnimating = false;
-            }, 300);
-        } else {
-            // 通常時
-            scrollLayer.scrollTop = 0;
-            this.isAnimating = false;
-        }
-    }
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-    if (typeof storyData !== 'undefined') {
-        const game = new EscapeGameEngine(storyData);
-        game.init();
-    } else {
-        console.error('storyData is not defined.');
-    }
-});
+                        let finalClass = isGameOver ? 'route-floor-
