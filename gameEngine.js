@@ -1,6 +1,6 @@
 /**
  * gameEngine.js
- * ゲームの描画・状態管理ライブラリ（ランク別セーブ・リトライ完全対応版）
+ * ゲームの描画・状態管理ライブラリ（リトライ時のマップ履歴同期対応版）
  */
 class EscapeGameEngine {
     constructor(storyData, config = {}) {
@@ -9,10 +9,10 @@ class EscapeGameEngine {
         this.choiceDisplayId = config.choiceDisplayId || 'choice-display';
         this.statusBadgeId = config.statusBadgeId || 'status-badge';
         this.startSceneKey = config.startSceneKey || 'start';
-        this.saveKey = config.saveKey + '_v5';
-        this.rankKey = config.saveKey + '_rank_checkpoint_v5';
-        this.historyKey = config.saveKey + '_history_v5';
-        this.revealedKey = config.saveKey + '_revealed_v5';
+        this.saveKey = config.saveKey + '_v6';
+        this.checkpointKey = config.saveKey + '_rank_checkpoint_v6';
+        this.historyKey = config.saveKey + '_history_v6';
+        this.revealedKey = config.saveKey + '_revealed_v6';
     }
 
     init() {
@@ -40,9 +40,7 @@ class EscapeGameEngine {
         return { id: sceneKey, name: displayName };
     }
 
-    // シーンキーや階層から、正確な「階層ランク（deep / mid / upper）」を判定する
     getSceneRank(sceneKey) {
-        // 上層：第10層〜第1層、およびエスケープ
         if (sceneKey.startsWith('f10') || sceneKey.startsWith('f9') || sceneKey.startsWith('f8') || 
             sceneKey.startsWith('f7') || sceneKey.startsWith('f6') || sceneKey.startsWith('f5') || 
             sceneKey.startsWith('f4') || sceneKey.startsWith('f3') || sceneKey.startsWith('f2') || 
@@ -50,43 +48,14 @@ class EscapeGameEngine {
             return 'upper';
         }
         
-        // 中層：第15層〜第11層（f15〜f11）
         if (sceneKey.startsWith('f15') || sceneKey.startsWith('f14') || sceneKey.startsWith('f13') || 
             sceneKey.startsWith('f12') || sceneKey.startsWith('f11')) {
             return 'mid';
         }
 
-        // 深層：20〜16層（f20, f19, f18, f17, f16 および start 系）
         return 'deep';
     }
 
-    // ご指定のルールに基づくリトライ先の決定
-    // ・15層に到達するまでは深層の初めからリトライ
-    // ・10層に到達するまでは15層からリトライ
-    getRetryTargetScene(currentRank, hasReachedF15) {
-        if (currentRank === 'upper') {
-            // 上層（10層〜1層）にいる場合
-            // 10層に到達していれば15層（中層初め）から、していなければ深層から等の制御
-            if (this.hasReachedF10()) {
-                return 'f15_p1'; // 10層到達後は15層から
-            } else {
-                return 'start'; // 到達していなければ深層初め
-            }
-        } else if (currentRank === 'mid') {
-            // 中層（15層〜11層）にいる場合
-            // 15層に到達するまでは深層の初めから
-            if (this.hasReachedF15) {
-                return 'f15_p1'; // 15層の初め
-            } else {
-                return 'start';
-            }
-        } else {
-            // 深層（20〜16層）
-            return 'start';
-        }
-    }
-
-    // 15層以上に到達したことがあるか判定
     checkReachedMilestones(sceneKey) {
         const match = sceneKey.match(/^f(\d+)/);
         if (match) {
@@ -103,8 +72,27 @@ class EscapeGameEngine {
     }
 
     hasReachedF10() {
-        // 上層のシーン（f10以降）を踏んでいるか履歴からチェック
-        return this.routeHistory.some(item => item.id.startsWith('f10') || item.id.startsWith('f9') || item.id.startsWith('f8') || item.id.startsWith('f7') || item.id.startsWith('f6') || item.id.startsWith('f5') || item.id.startsWith('f4') || item.id.startsWith('f3') || item.id.startsWith('f2') || item.id.startsWith('f1'));
+        return this.routeHistory.some(item => {
+            const id = item.id;
+            return id.startsWith('f10') || id.startsWith('f9') || id.startsWith('f8') || id.startsWith('f7') || id.startsWith('f6') || id.startsWith('f5') || id.startsWith('f4') || id.startsWith('f3') || id.startsWith('f2') || id.startsWith('f1');
+        });
+    }
+
+    // リトライ時にマップ履歴をリトライ先（現在地）までのものに切り詰める（同期する）
+    syncHistoryUpTo(targetSceneKey) {
+        const targetScene = this.storyData[targetSceneKey];
+        if (!targetScene) return;
+        const targetItem = this.getMapNodeItem(targetSceneKey, targetScene);
+
+        const index = this.routeHistory.findIndex(item => item.id === targetItem.id);
+        if (index !== -1) {
+            // 履歴の中にリトライ先があれば、そこまででスライスする
+            this.routeHistory = this.routeHistory.slice(0, index + 1);
+        } else {
+            // 履歴になければ、リトライ先ノードを末尾にするかリセット
+            this.routeHistory = [targetItem];
+        }
+        localStorage.setItem(this.historyKey, JSON.stringify(this.routeHistory));
     }
 
     renderScene(sceneKey) {
@@ -120,7 +108,6 @@ class EscapeGameEngine {
         const isGameOver = !scene.choices || scene.choices.length === 0;
         const currentRank = this.getSceneRank(sceneKey);
 
-        // ランクごとにセーブ（最後に到達したランクとシーンを保存）
         if (!isGameOver) {
             localStorage.setItem(this.checkpointKey, currentRank);
             localStorage.setItem(this.saveKey, sceneKey);
@@ -135,11 +122,9 @@ class EscapeGameEngine {
             }
         }
 
-        // テキスト表示
         const textDisplay = document.getElementById(this.textDisplayId);
         if (textDisplay) textDisplay.innerHTML = scene.text;
 
-        // 右上ヘッダーに「最初からやり直す」ボタン配置
         const statusBadge = document.getElementById(this.statusBadgeId);
         if (statusBadge) {
             statusBadge.innerHTML = '';
@@ -178,16 +163,12 @@ class EscapeGameEngine {
                 choiceDisplay.appendChild(button);
             });
         } else if (!isEnding) {
-            // 【ゲームオーバー時】ランク別ルールに従ってリトライ先を決定
             let retryTarget = 'start';
             if (currentRank === 'upper') {
-                // 上層で死亡：10層に到達するまでは15層から、以降は上層初め（f10_p1）
                 retryTarget = this.hasReachedF10() ? 'f10_p1' : 'f15_p1';
             } else if (currentRank === 'mid') {
-                // 中層で死亡：15層に到達するまでは深層の初めから、以降は15層初め（f15_p1）
                 retryTarget = this.hasReachedF15 ? 'f15_p1' : 'start';
             } else {
-                // 深層で死亡：深層の初めから
                 retryTarget = 'start';
             }
 
@@ -195,6 +176,8 @@ class EscapeGameEngine {
             checkpointBtn.className = 'btn btn-retry';
             checkpointBtn.innerText = 'ランク規定位置からやり直す';
             checkpointBtn.onclick = () => {
+                // 【重要】リトライ時にマップ履歴をリトライ先まで巻き戻して同期する
+                this.syncHistoryUpTo(retryTarget);
                 this.renderScene(retryTarget);
             };
             choiceDisplay.appendChild(checkpointBtn);
