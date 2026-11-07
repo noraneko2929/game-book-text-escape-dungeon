@@ -1,11 +1,6 @@
 /**
  * gameEngine.js
- * ゲームの描画・状態管理ライブラリ
- * - 自動セーブ・ロード機能
- * - ルート履歴の記録と画面下部での点・線（マップ）可視化
- * - 深層での階層数非表示＆第15階層到達後の解除
- * - ゲームオーバー時は「階層の最初」から再開（ルート履歴維持）
- * - 「最初からやり直す」時はセーブデータ＆ルート履歴削除
+ * ゲームの描画・状態管理ライブラリ（ネットワークマップUI対応版）
  */
 class EscapeGameEngine {
     constructor(storyData, config = {}) {
@@ -17,15 +12,16 @@ class EscapeGameEngine {
         this.saveKey = config.saveKey || 'escape_game_current_scene';
         this.checkpointKey = config.saveKey + '_checkpoint';
         this.historyKey = config.saveKey + '_route_history';
-        this.revealedKey = config.saveKey + '_revealed_floors'; // 15階層到達フラグ
+        this.edgesKey = config.saveKey + '_route_edges';
+        this.revealedKey = config.saveKey + '_revealed_floors';
     }
 
     init() {
         const savedScene = localStorage.getItem(this.saveKey);
         const targetScene = (savedScene && this.storyData[savedScene]) ? savedScene : this.startSceneKey;
         
-        // ルート履歴と15階層到達フラグの読み込み
         this.routeHistory = JSON.parse(localStorage.getItem(this.historyKey) || '[]');
+        this.routeEdges = JSON.parse(localStorage.getItem(this.edgesKey) || '[]');
         this.hasReachedF15 = localStorage.getItem(this.revealedKey) === 'true';
 
         this.renderScene(targetScene);
@@ -37,7 +33,6 @@ class EscapeGameEngine {
         return false;
     }
 
-    // 第15階層以上に到達したかチェック
     checkF15Reached(sceneKey) {
         if (sceneKey.startsWith('f15') || sceneKey.startsWith('f14') || sceneKey.startsWith('f13') || 
             sceneKey.startsWith('f12') || sceneKey.startsWith('f11') || sceneKey.startsWith('f10') || 
@@ -57,31 +52,37 @@ class EscapeGameEngine {
             return;
         }
 
-        // 第15階層到達チェック
         this.checkF15Reached(sceneKey);
 
-        // ルート履歴の更新（連続での重複登録を防止）
-        if (this.routeHistory.length === 0 || this.routeHistory[this.routeHistory.length - 1] !== sceneKey) {
+        // 履歴と接続エッジ（線）の記録
+        if (this.routeHistory.length === 0) {
             this.routeHistory.push(sceneKey);
-            localStorage.setItem(this.historyKey, JSON.stringify(this.routeHistory));
+        } else {
+            const prevSceneKey = this.routeHistory[this.routeHistory.length - 1];
+            if (prevSceneKey !== sceneKey) {
+                this.routeHistory.push(sceneKey);
+                // どのノードからどのノードへ移動したかをエッジとして記録
+                const edgeKey = `${prevSceneKey}-->${sceneKey}`;
+                if (!this.routeEdges.includes(edgeKey)) {
+                    this.routeEdges.push(edgeKey);
+                }
+            }
         }
 
-        // 現在のシーンをLocalStorageに自動セーブ
+        localStorage.setItem(this.historyKey, JSON.stringify(this.routeHistory));
+        localStorage.setItem(this.edgesKey, JSON.stringify(this.routeEdges));
         localStorage.setItem(this.saveKey, sceneKey);
 
-        // 階層の最初（フロアの起点）であれば、チェックポイントを更新
         if (this.isFloorStart(sceneKey)) {
             localStorage.setItem(this.checkpointKey, sceneKey);
         }
 
-        // テキスト・ステータス表示の更新
         const textDisplay = document.getElementById(this.textDisplayId);
         const statusBadge = document.getElementById(this.statusBadgeId);
 
         if (textDisplay) textDisplay.innerHTML = scene.text;
         if (statusBadge) statusBadge.innerText = scene.status;
 
-        // 選択肢ボタンエリアの初期化
         const choiceDisplay = document.getElementById(this.choiceDisplayId);
         if (!choiceDisplay) return;
 
@@ -101,7 +102,6 @@ class EscapeGameEngine {
                 choiceDisplay.appendChild(button);
             });
         } else if (!isEnding) {
-            // 【ゲームオーバー時】現在の階層の最初へ戻るボタン（ルート履歴はそのまま維持）
             const floorCheckpoint = localStorage.getItem(this.checkpointKey);
             const retryTarget = (floorCheckpoint && this.storyData[floorCheckpoint]) ? floorCheckpoint : this.startSceneKey;
 
@@ -113,7 +113,6 @@ class EscapeGameEngine {
             };
             choiceDisplay.appendChild(checkpointBtn);
         } else {
-            // 【エンディング時】
             const endingMsg = document.createElement('div');
             endingMsg.style.color = '#4caf50';
             endingMsg.style.marginBottom = '10px';
@@ -122,10 +121,9 @@ class EscapeGameEngine {
             choiceDisplay.appendChild(endingMsg);
         }
 
-        // ルートマップ表示
-        this.renderRouteMap();
+        // ネットワークマップの描画
+        this.renderRouteMap(sceneKey);
 
-        // 画面最下部に「最初からやり直す（セーブ＆記録消去）」ボタンを小さく常時表示
         const restartContainer = document.createElement('div');
         restartContainer.className = 'restart-container';
 
@@ -137,8 +135,10 @@ class EscapeGameEngine {
                 localStorage.removeItem(this.saveKey);
                 localStorage.removeItem(this.checkpointKey);
                 localStorage.removeItem(this.historyKey);
+                localStorage.removeItem(this.edgesKey);
                 localStorage.removeItem(this.revealedKey);
                 this.routeHistory = [];
+                this.routeEdges = [];
                 this.hasReachedF15 = false;
                 this.renderScene(this.startSceneKey);
             }
@@ -148,79 +148,99 @@ class EscapeGameEngine {
         choiceDisplay.appendChild(restartContainer);
     }
 
-    // 画面下に点と線で通過ルートを描画する関数
-    renderRouteMap() {
+    // スクショのようなネットワーク・ツリーマップを描画する関数
+    renderRouteMap(currentSceneKey) {
         let routeMapContainer = document.getElementById('route-map-container');
         if (!routeMapContainer) {
             routeMapContainer = document.createElement('div');
             routeMapContainer.id = 'route-map-container';
             routeMapContainer.className = 'route-map-container';
             const gameContainer = document.querySelector('.game-container');
-            gameContainer.appendChild(routeMapContainer);
+            gameContainer.insertBefore(routeMapContainer, document.querySelector('.text-area'));
         }
 
         routeMapContainer.innerHTML = '';
 
         const mapTitle = document.createElement('div');
         mapTitle.className = 'route-map-title';
-        mapTitle.innerText = '🗺️ 通過ルート記録';
+        mapTitle.innerText = '🗺️ 探索ルートマップ';
         routeMapContainer.appendChild(mapTitle);
 
-        const nodesWrapper = document.createElement('div');
-        nodesWrapper.className = 'route-nodes-wrapper';
+        // ネットワークビューポート（SVGまたはカスタムノードエリア）
+        const svgContainer = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svgContainer.setAttribute('class', 'route-svg-map');
+        svgContainer.setAttribute('viewBox', '0 0 550 180');
 
-        this.routeHistory.forEach((key, index) => {
-            const scene = this.storyData[key];
-            const node = document.createElement('div');
-            node.className = 'route-node';
+        // 通過したユニークなノードリスト
+        const visitedSet = new Set(this.routeHistory);
+        const nodesArray = Array.from(visitedSet);
 
-            const isGameOver = !scene.choices || scene.choices.length === 0;
-            if (isGameOver && !key.startsWith('escape_')) {
-                node.classList.add('node-dead');
-            } else if (index === this.routeHistory.length - 1) {
-                node.classList.add('node-current');
+        // 簡易レイアウト座標計算（X軸に沿って配置、分岐は上下にオフセット）
+        const nodePositions = {};
+        const totalNodes = nodesArray.length;
+        const spacingX = Math.max(40, 500 / (totalNodes || 1));
+
+        nodesArray.forEach((key, index) => {
+            let x = 40 + index * spacingX;
+            let y = 90;
+            // 分岐や死亡ノードの上下位置調整
+            if (key.includes('gameover')) {
+                y = index % 2 === 0 ? 140 : 40;
+            } else if (index % 2 !== 0) {
+                y = 60;
             } else {
-                node.classList.add('node-passed');
+                y = 120;
             }
+            nodePositions[key] = { x, y };
+        });
 
-            // ラベル判定（第15階層到達前は深層の階層数を「???」で隠す）
-            let labelText = '???';
-            if (this.hasReachedF15) {
-                labelText = scene.status || key;
-            } else {
-                if (key.startsWith('f15') || key.startsWith('f14') || key.startsWith('f13') || 
-                    key.startsWith('f12') || key.startsWith('f11') || key.startsWith('f10') || 
-                    key.startsWith('f9') || key.startsWith('f8') || key.startsWith('f7') || 
-                    key.startsWith('f6') || key.startsWith('f5') || key.startsWith('f4') || 
-                    key.startsWith('f3') || key.startsWith('f2') || key.startsWith('f1') || 
-                    key === 'escape_true') {
-                    labelText = scene.status || key;
-                } else {
-                    labelText = '???（未可視）';
-                }
-            }
-
-            const tooltip = document.createElement('span');
-            tooltip.className = 'route-tooltip';
-            tooltip.innerText = `${index + 1}. ${labelText}`;
-            node.appendChild(tooltip);
-
-            nodesWrapper.appendChild(node);
-
-            // ノード間のつなぎ線
-            if (index < this.routeHistory.length - 1) {
-                const line = document.createElement('div');
-                line.className = 'route-line';
-                nodesWrapper.appendChild(line);
+        // 1. エッジ（線）の描画
+        this.routeEdges.forEach(edge => {
+            const [from, to] = edge.split('-->');
+            if (nodePositions[from] && nodePositions[to]) {
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('x1', nodePositions[from].x);
+                line.setAttribute('y1', nodePositions[from].y);
+                line.setAttribute('x2', nodePositions[to].x);
+                line.setAttribute('y2', nodePositions[to].y);
+                line.setAttribute('class', 'map-edge-line');
+                svgContainer.appendChild(line);
             }
         });
 
-        routeMapContainer.appendChild(nodesWrapper);
+        // 2. ノード（点）の描画
+        nodesArray.forEach(key => {
+            const pos = nodePositions[key];
+            const scene = this.storyData[key];
+            if (!scene) return;
 
-        // 自動で最新のノードへスクロール
-        setTimeout(() => {
-            nodesWrapper.scrollLeft = nodesWrapper.scrollWidth;
-        }, 50);
+            const isCurrent = (key === currentSceneKey);
+            const isGameOver = !scene.choices || scene.choices.length === 0;
+
+            const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            g.setAttribute('class', 'map-node-group');
+
+            const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            circle.setAttribute('cx', pos.x);
+            circle.setAttribute('cy', pos.y);
+            circle.setAttribute('r', isCurrent ? '8' : '5');
+            
+            let circleClass = 'map-node-passed';
+            if (isCurrent) circleClass = 'map-node-current';
+            else if (isGameOver && !key.includes('escape')) circleClass = 'map-node-dead';
+            circle.setAttribute('class', circleClass);
+
+            // ツールチップ（ラベル）
+            const title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
+            let labelText = this.hasReachedF15 || !key.startsWith('f') ? (scene.status || key) : '???';
+            title.textContent = labelText;
+
+            circle.appendChild(title);
+            g.appendChild(circle);
+            svgContainer.appendChild(g);
+        });
+
+        routeMapContainer.appendChild(svgContainer);
     }
 }
 
@@ -229,6 +249,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const game = new EscapeGameEngine(storyData);
         game.init();
     } else {
-        console.error('storyData is not defined. Make sure storyData.js is loaded before gameEngine.js.');
+        console.error('storyData is not defined.');
     }
 });
