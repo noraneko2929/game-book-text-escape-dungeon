@@ -1,6 +1,6 @@
 /**
  * gameEngine.js
- * ゲームの描画・状態管理ライブラリ（初期表示・階層積み上げ順序完全修正版）
+ * ゲームの描画・状態管理ライブラリ（同階層移動時のスクロール位置バグ修正版）
  */
 class EscapeGameEngine {
     constructor(storyData, config = {}) {
@@ -10,9 +10,9 @@ class EscapeGameEngine {
         this.statusBadgeId = config.statusBadgeId || 'status-badge';
         this.startSceneKey = config.startSceneKey || 'start';
         this.saveKey = (config.saveKey || 'escape_game') + '_save_rank';
-        this.historyKey = (config.saveKey || 'escape_game') + '_history_v18';
-        this.checkpointKey = (config.saveKey || 'escape_game') + '_checkpoint_v18';
-        this.revealedKey = (config.saveKey || 'escape_game') + '_revealed_v18';
+        this.historyKey = (config.saveKey || 'escape_game') + '_history_v19';
+        this.checkpointKey = (config.saveKey || 'escape_game') + '_checkpoint_v19';
+        this.revealedKey = (config.saveKey || 'escape_game') + '_revealed_v19';
         this.isAnimating = false;
     }
 
@@ -229,7 +229,7 @@ class EscapeGameEngine {
 
         const itemsToRender = [];
 
-        // 1. 【上】常に最新の未到達階層（？？？）を配置
+        // 1. 【上】未到達階層（？？？）
         if (!isGameOver && !isEnding) {
             itemsToRender.push({
                 type: 'floor',
@@ -257,7 +257,7 @@ class EscapeGameEngine {
             className: currentClass
         });
 
-        // 3. 【下】過去の履歴（直前の階層から順に下へ、最大2つまで蓄積順に表示）
+        // 3. 【下】過去の履歴
         for (let i = displayList.length - 2; i >= 0; i--) {
             const histItem = displayList[i];
             const histSceneObj = this.storyData[histItem.id] || {};
@@ -292,10 +292,7 @@ class EscapeGameEngine {
 
         routeMapContainer.appendChild(scrollLayer);
 
-        const activeElement = scrollLayer.querySelector('.floor-current') || scrollLayer.children[0];
-
         if (animateAdvance) {
-            // アニメーション演出（上に「？？？枠」が挿入されてスクロールアップする演出）
             scrollLayer.scrollTop = 42;
 
             setTimeout(() => {
@@ -329,13 +326,9 @@ class EscapeGameEngine {
 
             }, 50);
         } else {
+            // 通常時（階層が進んでいない場合）：スクロール位置を常に最上部（トップ＝0）に固定して下へズレるのを防ぐ
             setTimeout(() => {
-                if (activeElement) {
-                    const targetOffset = activeElement.offsetTop - (scrollLayer.clientHeight / 2) + (activeElement.clientHeight / 2);
-                    scrollLayer.scrollTop = Math.max(0, targetOffset);
-                } else {
-                    scrollLayer.scrollTop = 0;
-                }
+                scrollLayer.scrollTop = 0;
                 this.isAnimating = false;
             }, 10);
         }
