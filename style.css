@@ -5,7 +5,7 @@ body {
     background-color: #121214;
     color: #e0e0e6;
     margin: 0;
-    padding: 20px;
+    padding: 10px;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -16,10 +16,11 @@ body {
 .game-container {
     width: 100%;
     max-width: 600px;
-    height: 680px;
+    height: 100vh;
+    max-height: 720px;
     background-color: #1e1e24;
     border-radius: 12px;
-    padding: 25px;
+    padding: 20px;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
     border: 1px solid #2e2e38;
     display: flex;
@@ -32,48 +33,50 @@ body {
     justify-content: space-between;
     align-items: center;
     border-bottom: 2px solid #2e2e38;
-    padding-bottom: 15px;
-    margin-bottom: 20px;
+    padding-bottom: 12px;
+    margin-bottom: 15px;
     flex-shrink: 0;
 }
 
 .title {
-    font-size: 1.2rem;
+    font-size: 1.05rem;
     font-weight: bold;
     color: #4caf50;
     margin: 0;
+    line-height: 1.4;
 }
 
 .badge {
     background: none;
     padding: 0;
     border: none;
+    flex-shrink: 0;
 }
 
 .route-map-container {
     background-color: #16161a;
     border: 1px solid #2e2e38;
     border-radius: 8px;
-    padding: 12px;
-    margin-bottom: 20px;
+    padding: 10px;
+    margin-bottom: 15px;
     overflow: hidden;
     flex-shrink: 0;
 }
 
 .route-map-title {
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     color: #a0a0ab;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
     font-weight: bold;
 }
 
 .route-scroll-layer {
-    height: 130px;
+    height: 120px;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 6px 0;
+    padding: 4px 0;
     box-sizing: border-box;
     -ms-overflow-style: none;
     scrollbar-width: none;
@@ -87,29 +90,29 @@ body {
 .route-floor-item {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     background-color: #22222a;
     border: 1px solid #3f3f4f;
-    padding: 6px 14px;
+    padding: 4px 12px;
     border-radius: 20px;
-    width: 80%;
-    max-width: 300px;
-    height: 28px;
+    width: 85%;
+    max-width: 280px;
+    height: 26px;
     box-sizing: border-box;
     flex-shrink: 0;
     transition: all 0.3s ease;
 }
 
 .floor-dot {
-    width: 8px;
-    height: 8px;
+    width: 7px;
+    height: 7px;
     border-radius: 50%;
     background-color: #555566;
     flex-shrink: 0;
 }
 
 .floor-label {
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     color: #a0a0ab;
     white-space: nowrap;
     overflow: hidden;
@@ -129,13 +132,13 @@ body {
     background-color: #1a2736;
     border-color: #2196f3;
     color: #ffffff;
-    box-shadow: 0 0 10px rgba(33, 150, 243, 0.4);
+    box-shadow: 0 0 8px rgba(33, 150, 243, 0.4);
     font-weight: bold;
 }
 
 .floor-current .floor-dot {
     background-color: #2196f3;
-    box-shadow: 0 0 6px #2196f3;
+    box-shadow: 0 0 5px #2196f3;
 }
 
 .floor-unknown {
@@ -149,7 +152,6 @@ body {
     background-color: #444455;
 }
 
-/* ゲームオーバー時のスタイル（赤系） */
 .floor-dead {
     background-color: #361a1a;
     border-color: #f44336;
@@ -159,23 +161,22 @@ body {
     background-color: #f44336;
 }
 
-/* クリア（生還）時のスタイル（ゴールド・金色系） */
 .floor-clear {
     background-color: #332d1a;
     border-color: #ffc107;
     color: #ffffff;
-    box-shadow: 0 0 12px rgba(255, 193, 7, 0.4);
+    box-shadow: 0 0 10px rgba(255, 193, 7, 0.4);
     font-weight: bold;
 }
 
 .floor-clear .floor-dot {
     background-color: #ffc107;
-    box-shadow: 0 0 6px #ffc107;
+    box-shadow: 0 0 5px #ffc107;
 }
 
 .floor-connector {
     width: 2px;
-    height: 14px;
+    height: 12px;
     background-color: #3f3f4f;
     flex-shrink: 0;
     align-self: center;
@@ -187,9 +188,9 @@ body {
 }
 
 .text-area {
-    font-size: 1.05rem;
-    line-height: 1.7;
-    margin-bottom: 20px;
+    font-size: 0.98rem;
+    line-height: 1.6;
+    margin-bottom: 15px;
     white-space: pre-wrap;
     flex-grow: 1;
     overflow-y: auto;
@@ -198,10 +199,9 @@ body {
 .choice-container {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 10px;
     margin-bottom: 5px;
     flex-shrink: 0;
-    min-height: 180px;
     justify-content: flex-start;
 }
 
@@ -209,14 +209,15 @@ body {
     background-color: #2a2a35;
     color: #ffffff;
     border: 1px solid #3f3f4f;
-    padding: 14px 20px;
-    font-size: 1rem;
+    padding: 12px 16px;
+    font-size: 0.95rem;
     border-radius: 8px;
     cursor: pointer;
     text-align: left;
     transition: all 0.2s ease;
     box-sizing: border-box;
-    height: 50px;
+    min-height: 48px;
+    height: auto; /* 高さを固定せずテキスト量に応じて可変に */
     display: flex;
     align-items: center;
 }
@@ -224,7 +225,6 @@ body {
 .btn:hover {
     background-color: #353545;
     border-color: #4caf50;
-    transform: translateY(-1px);
 }
 
 .btn-retry {
@@ -244,10 +244,11 @@ body {
     background: none;
     border: 1px solid #3f3f4f;
     color: #a0a0ab;
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     border-radius: 4px;
     cursor: pointer;
-    padding: 6px 12px;
+    padding: 6px 10px;
+    white-space: nowrap; /* ボタンテキストが意図せず縦に折れないようにする */
     transition: all 0.2s ease;
 }
 
@@ -265,4 +266,28 @@ body {
 .danger-text {
     color: #f44336;
     font-weight: bold;
+}
+
+/* 小画面（スマホ）向けの微調整 */
+@media (max-width: 480px) {
+    body {
+        padding: 0;
+    }
+    .game-container {
+        padding: 12px;
+        height: 100vh;
+        max-height: none;
+        border-radius: 0;
+        border: none;
+    }
+    .title {
+        font-size: 0.95rem;
+    }
+    .text-area {
+        font-size: 0.92rem;
+    }
+    .btn {
+        font-size: 0.9rem;
+        padding: 10px 14px;
+    }
 }
