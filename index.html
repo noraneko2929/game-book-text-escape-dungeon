@@ -92,17 +92,39 @@
             transform: translateY(1px);
         }
 
-        /* 特殊なボタン（リセットなど） */
-        .btn-reset {
-            background-color: #3a1e1e;
-            border-color: #5a2e2e;
+        /* ゲームオーバー時の直前選択肢リトライボタン */
+        .btn-retry {
+            background-color: #3a2a1e;
+            border-color: #5a402e;
+            color: #ffc107;
             text-align: center;
-            margin-top: 15px;
+            font-weight: bold;
         }
 
-        .btn-reset:hover {
-            background-color: #4a2828;
-            border-color: #f44336;
+        .btn-retry:hover {
+            background-color: #4a3828;
+            border-color: #ffc107;
+        }
+
+        /* 「最初からやり直す」控えめなボタン表示 */
+        .restart-container {
+            margin-top: 15px;
+            text-align: center;
+        }
+
+        .btn-small-reset {
+            background: none;
+            border: none;
+            color: #707080;
+            font-size: 0.8rem;
+            text-decoration: underline;
+            cursor: pointer;
+            padding: 5px 10px;
+            transition: color 0.2s ease;
+        }
+
+        .btn-small-reset:hover {
+            color: #f44336;
         }
         
         .success-text { color: #4caf50; font-weight: bold; }
@@ -113,7 +135,7 @@
 
 <div class="game-container">
     <div class="header">
-        <h1 class="title">🔬 LAB ESCAPE</h1>
+        <h1 class="title">⚔️ DUNGEON ESCAPE</h1>
         <div id="status-badge" class="badge">探索中</div>
     </div>
     
@@ -125,7 +147,6 @@
 </div>
 
     <!-- 外部JavaScriptファイルの読み込み -->
-    <!-- ※必ず gameEngine.js より前に storyData.js を読み込んでください -->
     <script src="storyData.js"></script>
     <script src="gameEngine.js"></script>
 </body>
