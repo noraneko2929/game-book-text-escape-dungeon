@@ -1,6 +1,6 @@
 /**
  * gameEngine.js
- * ゲームの描画・状態管理ライブラリ（カスタムイージングスクロール対応版）
+ * ゲームの描画・状態管理ライブラリ（スムーズ同期スクロール＆クリアカラー対応版）
  */
 class EscapeGameEngine {
     constructor(storyData, config = {}) {
@@ -10,9 +10,9 @@ class EscapeGameEngine {
         this.statusBadgeId = config.statusBadgeId || 'status-badge';
         this.startSceneKey = config.startSceneKey || 'start';
         this.saveKey = (config.saveKey || 'escape_game') + '_save_rank';
-        this.historyKey = (config.saveKey || 'escape_game') + '_history_v27';
-        this.checkpointKey = (config.saveKey || 'escape_game') + '_checkpoint_v27';
-        this.revealedKey = (config.saveKey || 'escape_game') + '_revealed_v27';
+        this.historyKey = (config.saveKey || 'escape_game') + '_history_v28';
+        this.checkpointKey = (config.saveKey || 'escape_game') + '_checkpoint_v28';
+        this.revealedKey = (config.saveKey || 'escape_game') + '_revealed_v28';
         this.isAnimating = false;
     }
 
@@ -179,17 +179,17 @@ class EscapeGameEngine {
             choiceDisplay.appendChild(checkpointBtn);
         } else {
             const endingMsg = document.createElement('div');
-            endingMsg.style.color = '#4caf50';
+            endingMsg.style.color = '#ffc107';
             endingMsg.style.marginBottom = '10px';
             endingMsg.style.fontWeight = 'bold';
             endingMsg.innerText = 'おめでとうございます！生還を達成しました。';
             choiceDisplay.appendChild(endingMsg);
         }
 
-        this.renderRouteMap(nodeItem.id, isGameOver, useTransition && isNewFloorAdvanced);
+        this.renderRouteMap(nodeItem.id, isGameOver, useTransition && isNewFloorAdvanced, isEnding);
     }
 
-    renderRouteMap(currentNodeId, isGameOver, animateAdvance = false) {
+    renderRouteMap(currentNodeId, isGameOver, animateAdvance = false, isEnding = false) {
         let routeMapContainer = document.getElementById('route-map-container');
         if (!routeMapContainer) {
             routeMapContainer = document.createElement('div');
@@ -219,9 +219,7 @@ class EscapeGameEngine {
             displayList = [{ id: currentNodeId, name: currentScene.status || '未知の最深部' }];
         }
 
-        const isEnding = currentNodeId.startsWith('escape_');
         let targetAnimatingId = null;
-
         if (animateAdvance && displayList.length > 1) {
             this.isAnimating = true;
             targetAnimatingId = displayList[displayList.length - 1].id;
@@ -244,7 +242,10 @@ class EscapeGameEngine {
         const currentSceneObj = this.storyData[currentItem.id] || {};
         const resolvedCurrent = this.getMapNodeItem(currentItem.id, currentSceneObj);
         
-        let currentClass = isGameOver ? 'floor-current floor-dead' : 'floor-current';
+        let currentClass = 'floor-current';
+        if (isGameOver) currentClass = 'floor-current floor-dead';
+        else if (isEnding) currentClass = 'floor-current floor-clear';
+
         let labelText = `${resolvedCurrent.name}（現在地）`;
 
         if (animateAdvance && currentItem.id === targetAnimatingId) {
@@ -294,63 +295,63 @@ class EscapeGameEngine {
 
         routeMapContainer.appendChild(scrollLayer);
 
-        const itemStepHeight = 42; 
+        const itemStepHeight = 42;
         const maxScrollableHeight = scrollLayer.scrollHeight - scrollLayer.clientHeight;
 
         if (animateAdvance && maxScrollableHeight > 0) {
-            // ① 初めから1ステップ分下にずらしておく
+            // スクロールが必要な場合（3→4以降）：1ステップ分下からスタートし、イージングでなめらかに同期スクロール
             scrollLayer.scrollTop = itemStepHeight;
 
-            setTimeout(() => {
-                // ② イージング関数付きカスタムスムーズスクロール（requestAnimationFrame）
-                const startPos = scrollLayer.scrollTop;
-                const targetPos = 0;
-                const distance = targetPos - startPos;
-                const duration = 500; // ミリ秒（0.5秒かけて滑らかに移動）
-                let startTime = null;
+            const startPos = scrollLayer.scrollTop;
+            const targetPos = 0;
+            const distance = targetPos - startPos;
+            const duration = 450; // ミリ秒（よりスムーズでキビキビとした速度感）
+            let startTime = null;
 
-                // easeOutCubic イージング（後半にかけて心地よく減速）
-                const easeOutCubic = t => 1 - Math.pow(1 - t, 3);
+            const easeOutCubic = t => 1 - Math.pow(1 - t, 3);
 
-                const scrollAnimation = currentTime => {
-                    if (!startTime) startTime = currentTime;
-                    const elapsed = currentTime - startTime;
-                    const progress = Math.min(elapsed / duration, 1);
-                    const ease = easeOutCubic(progress);
+            const scrollAnimation = currentTime => {
+                if (!startTime) startTime = currentTime;
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const ease = easeOutCubic(progress);
 
-                    scrollLayer.scrollTop = startPos + (distance * ease);
+                scrollLayer.scrollTop = startPos + (distance * ease);
 
-                    if (progress < 1) {
-                        requestAnimationFrame(scrollAnimation);
-                    } else {
-                        // ③ スクロール完了後に現在地名に書き換える
-                        const topItems = scrollLayer.querySelectorAll('.route-floor-item');
-                        const targetItem = topItems.length > 1 ? topItems[1] : topItems[0];
+                if (progress < 1) {
+                    requestAnimationFrame(scrollAnimation);
+                } else {
+                    // スクロール完了と同時に正確に正式名称へ書き換える
+                    const topItems = scrollLayer.querySelectorAll('.route-floor-item');
+                    const targetItem = topItems.length > 1 ? topItems[1] : topItems[0];
+                    
+                    if (targetItem) {
+                        const sceneObj = this.storyData[currentNodeId] || {};
+                        const resolvedNode = this.getMapNodeItem(currentNodeId, sceneObj);
                         
-                        if (targetItem) {
-                            const sceneObj = this.storyData[currentNodeId] || {};
-                            const resolvedNode = this.getMapNodeItem(currentNodeId, sceneObj);
-                            
-                            let finalClass = isGameOver ? 'route-floor-item floor-current floor-dead' : 'route-floor-item floor-current';
-                            targetItem.className = finalClass;
-                            targetItem.innerHTML = `
-                                <div class="floor-dot"></div>
-                                <div class="floor-label">${resolvedNode.name}（現在地）</div>
-                            `;
+                        let finalClass = 'floor-current';
+                        if (isGameOver) finalClass = 'floor-current floor-dead';
+                        else if (isEnding) finalClass = 'floor-current floor-clear';
 
-                            const connectors = scrollLayer.querySelectorAll('.floor-connector');
-                            if (connectors.length > 0) {
-                                connectors[0].classList.add('connector-active');
-                            }
+                        targetItem.className = `route-floor-item ${finalClass}`;
+                        targetItem.innerHTML = `
+                            <div class="floor-dot"></div>
+                            <div class="floor-label">${resolvedNode.name}（現在地）</div>
+                        `;
+
+                        const connectors = scrollLayer.querySelectorAll('.floor-connector');
+                        if (connectors.length > 0) {
+                            connectors[0].classList.add('connector-active');
                         }
-                        this.isAnimating = false;
                     }
-                };
+                    this.isAnimating = false;
+                }
+            };
 
-                requestAnimationFrame(scrollAnimation);
+            requestAnimationFrame(scrollAnimation);
 
-            }, 50);
         } else if (animateAdvance) {
+            // スクロール不要な場合（2→3など）：カクつかせず自然なタイミングでラベルを切り替え
             setTimeout(() => {
                 const topItems = scrollLayer.querySelectorAll('.route-floor-item');
                 const targetItem = topItems.length > 1 ? topItems[1] : topItems[0];
@@ -359,8 +360,11 @@ class EscapeGameEngine {
                     const sceneObj = this.storyData[currentNodeId] || {};
                     const resolvedNode = this.getMapNodeItem(currentNodeId, sceneObj);
                     
-                    let finalClass = isGameOver ? 'route-floor-item floor-current floor-dead' : 'route-floor-item floor-current';
-                    targetItem.className = finalClass;
+                    let finalClass = 'floor-current';
+                    if (isGameOver) finalClass = 'floor-current floor-dead';
+                    else if (isEnding) finalClass = 'floor-current floor-clear';
+
+                    targetItem.className = `route-floor-item ${finalClass}`;
                     targetItem.innerHTML = `
                         <div class="floor-dot"></div>
                         <div class="floor-label">${resolvedNode.name}（現在地）</div>
@@ -372,7 +376,7 @@ class EscapeGameEngine {
                     }
                 }
                 this.isAnimating = false;
-            }, 300);
+            }, 200);
         } else {
             scrollLayer.scrollTop = 0;
             this.isAnimating = false;
