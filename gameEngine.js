@@ -1,6 +1,6 @@
 /**
  * gameEngine.js
- * ゲームの描画・状態管理ライブラリ（滑らかなCSSスライド＆表記完全修正版）
+ * ゲームの描画・状態管理ライブラリ（直感的なスクロールアニメーションステップ対応版）
  */
 class EscapeGameEngine {
     constructor(storyData, config = {}) {
@@ -10,9 +10,9 @@ class EscapeGameEngine {
         this.statusBadgeId = config.statusBadgeId || 'status-badge';
         this.startSceneKey = config.startSceneKey || 'start';
         this.saveKey = (config.saveKey || 'escape_game') + '_save_rank';
-        this.historyKey = (config.saveKey || 'escape_game') + '_history_v20';
-        this.checkpointKey = (config.saveKey || 'escape_game') + '_checkpoint_v20';
-        this.revealedKey = (config.saveKey || 'escape_game') + '_revealed_v20';
+        this.historyKey = (config.saveKey || 'escape_game') + '_history_v21';
+        this.checkpointKey = (config.saveKey || 'escape_game') + '_checkpoint_v21';
+        this.revealedKey = (config.saveKey || 'escape_game') + '_revealed_v21';
         this.isAnimating = false;
     }
 
@@ -213,10 +213,6 @@ class EscapeGameEngine {
         const scrollLayer = document.createElement('div');
         scrollLayer.className = 'route-scroll-layer';
 
-        const animWrapper = document.createElement('div');
-        animWrapper.className = 'map-anim-wrapper';
-        scrollLayer.appendChild(animWrapper);
-
         let displayList = [...this.routeHistory];
         if (displayList.length === 0) {
             const currentScene = this.storyData[currentNodeId] || {};
@@ -251,7 +247,7 @@ class EscapeGameEngine {
         let currentClass = isGameOver ? 'floor-current floor-dead' : 'floor-current';
         let labelText = `${resolvedCurrent.name}（現在地）`;
 
-        // アニメーション移動中は「（現在地）」を付加せず、純粋な「？？？ (未到達)」として表示する
+        // 移動アニメーション実行中は、「（現在地）」を表示せず単なる「？？？ (未到達)」にしておく
         if (animateAdvance && currentItem.id === targetAnimatingId) {
             labelText = '？？？ (未到達)';
             currentClass = 'floor-unknown';
@@ -287,55 +283,86 @@ class EscapeGameEngine {
                 <div class="floor-dot"></div>
                 <div class="floor-label">${item.name}</div>
             `;
-            animWrapper.appendChild(floorItem);
+            scrollLayer.appendChild(floorItem);
 
             if (index < itemsToRender.length - 1) {
                 const connector = document.createElement('div');
                 const isNextUnknown = itemsToRender[index + 1].className.includes('floor-unknown');
                 connector.className = `floor-connector ${!isNextUnknown ? 'connector-active' : ''}`;
-                animWrapper.appendChild(connector);
+                scrollLayer.appendChild(connector);
             }
         });
 
         routeMapContainer.appendChild(scrollLayer);
 
-        if (animateAdvance) {
-            // ① CSSで1ステップ（42px）下からスライドを開始する初期位置にセット
-            animWrapper.style.transition = 'none';
-            animWrapper.style.transform = 'translateY(42px)';
+        // 要素数判定（全DOM要素数）
+        // スクロール可能な領域の高さ（44pxはアイテム28px+コネクター14px+余白分）
+        const itemStepHeight = 44;
+        const maxScrollableHeight = scrollLayer.scrollHeight - scrollLayer.clientHeight;
 
-            requestAnimationFrame(() => {
-                requestAnimationFrame(() => {
-                    // ② CSS transition を有効化して smoothly 上（Y=0）へ引き上げる
-                    animWrapper.style.transition = 'transform 0.6s cubic-bezier(0.25, 1, 0.5, 1)';
-                    animWrapper.style.transform = 'translateY(0px)';
+        if (animateAdvance && maxScrollableHeight > 0) {
+            // 【3つ以上階層がある場合：指定通りのスクロール演出】
+            // ① DOM追加直後、スクロール位置をあらかじめ1ステップ分だけ下にずらしておく（トップじゃない状態にする）
+            scrollLayer.scrollTop = itemStepHeight;
 
-                    // ③ スライドが中央にピタッと着地した後に、テキストを「（現在地）」へと正式に切り替える
-                    setTimeout(() => {
-                        const topItems = animWrapper.querySelectorAll('.route-floor-item');
-                        const targetItem = topItems.length > 1 ? topItems[1] : topItems[0];
-                        
-                        if (targetItem) {
-                            const sceneObj = this.storyData[currentNodeId] || {};
-                            const resolvedNode = this.getMapNodeItem(currentNodeId, sceneObj);
-                            
-                            let finalClass = isGameOver ? 'route-floor-item floor-current floor-dead' : 'route-floor-item floor-current';
-                            targetItem.className = finalClass;
-                            targetItem.innerHTML = `
-                                <div class="floor-dot"></div>
-                                <div class="floor-label">${resolvedNode.name}（現在地）</div>
-                            `;
-
-                            const connectors = animWrapper.querySelectorAll('.floor-connector');
-                            if (connectors.length > 0) {
-                                connectors[0].classList.add('connector-active');
-                            }
-                        }
-                        this.isAnimating = false;
-                    }, 600);
+            // ② スムーズスクロールで「トップ（0）」に向けてスクロールさせる
+            setTimeout(() => {
+                scrollLayer.scrollTo({
+                    top: 0,
+                    behavior: 'smooth'
                 });
-            });
+
+                // ③ スクロールが完了してトップに移動したタイミングで、中央の要素を「（現在地）」と正式名称へ切り替える
+                setTimeout(() => {
+                    const topItems = scrollLayer.querySelectorAll('.route-floor-item');
+                    const targetItem = topItems.length > 1 ? topItems[1] : topItems[0];
+                    
+                    if (targetItem) {
+                        const sceneObj = this.storyData[currentNodeId] || {};
+                        const resolvedNode = this.getMapNodeItem(currentNodeId, sceneObj);
+                        
+                        let finalClass = isGameOver ? 'route-floor-item floor-current floor-dead' : 'route-floor-item floor-current';
+                        targetItem.className = finalClass;
+                        targetItem.innerHTML = `
+                            <div class="floor-dot"></div>
+                            <div class="floor-label">${resolvedNode.name}（現在地）</div>
+                        `;
+
+                        const connectors = scrollLayer.querySelectorAll('.floor-connector');
+                        if (connectors.length > 0) {
+                            connectors[0].classList.add('connector-active');
+                        }
+                    }
+                    this.isAnimating = false;
+                }, 600);
+
+            }, 50);
+        } else if (animateAdvance) {
+            // 【2つの場合：スクロール領域が発生しないので、そのまま下へずれて表示切り替え】
+            setTimeout(() => {
+                const topItems = scrollLayer.querySelectorAll('.route-floor-item');
+                const targetItem = topItems.length > 1 ? topItems[1] : topItems[0];
+                
+                if (targetItem) {
+                    const sceneObj = this.storyData[currentNodeId] || {};
+                    const resolvedNode = this.getMapNodeItem(currentNodeId, sceneObj);
+                    
+                    let finalClass = isGameOver ? 'route-floor-item floor-current floor-dead' : 'route-floor-item floor-current';
+                    targetItem.className = finalClass;
+                    targetItem.innerHTML = `
+                        <div class="floor-dot"></div>
+                        <div class="floor-label">${resolvedNode.name}（現在地）</div>
+                    `;
+
+                    const connectors = scrollLayer.querySelectorAll('.floor-connector');
+                    if (connectors.length > 0) {
+                        connectors[0].classList.add('connector-active');
+                    }
+                }
+                this.isAnimating = false;
+            }, 300);
         } else {
+            // 通常時
             scrollLayer.scrollTop = 0;
             this.isAnimating = false;
         }
