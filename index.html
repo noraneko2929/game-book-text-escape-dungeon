@@ -163,6 +163,101 @@
         .btn-small-reset:hover {
             color: #f44336;
         }
+
+        /* 🗺️ 縦積み筒状マップUIのスタイル */
+.route-map-container {
+    background-color: #16161a;
+    border: 1px solid #2e2e38;
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 20px;
+}
+
+.route-map-title {
+    font-size: 0.85rem;
+    color: #a0a0ab;
+    margin-bottom: 8px;
+    font-weight: bold;
+}
+
+.route-scroll-wrapper {
+    max-height: 140px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 10px 0;
+    scroll-behavior: smooth;
+}
+
+.route-floor-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background-color: #22222a;
+    border: 1px solid #3f3f4f;
+    padding: 8px 16px;
+    border-radius: 20px;
+    width: 80%;
+    max-width: 320px;
+    transition: all 0.2s ease;
+}
+
+.floor-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #555566;
+}
+
+.floor-label {
+    font-size: 0.9rem;
+    color: #a0a0ab;
+}
+
+/* 状態ごとのスタイル */
+.floor-passed {
+    border-color: #4caf50;
+    color: #ffffff;
+}
+.floor-passed .floor-dot {
+    background-color: #4caf50;
+}
+
+.floor-current {
+    background-color: #1a2736;
+    border-color: #2196f3;
+    color: #ffffff;
+    box-shadow: 0 0 10px rgba(33, 150, 243, 0.4);
+    font-weight: bold;
+}
+.floor-current .floor-dot {
+    background-color: #2196f3;
+    box-shadow: 0 0 6px #2196f3;
+}
+
+.floor-dead {
+    background-color: #361a1a;
+    border-color: #f44336;
+}
+.floor-dead .floor-dot {
+    background-color: #f44336;
+}
+
+.floor-unvisited {
+    opacity: 0.5;
+}
+
+.floor-connector {
+    width: 2px;
+    height: 15px;
+    background-color: #3f3f4f;
+}
+
+.connector-active {
+    background-color: #4caf50;
+}
         
         .success-text { color: #4caf50; font-weight: bold; }
         .danger-text { color: #f44336; font-weight: bold; }
