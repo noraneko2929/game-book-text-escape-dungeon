@@ -1,46 +1,72 @@
 /**
  * gameEngine.js
- * ゲームの描画・状態管理ライブラリ（下から上への縦積み・1階層ごとマップ対応版）
+ * ゲームの描画・状態管理ライブラリ（下から上への縦積み・深層選択肢別積み上げ対応版）
  */
 class EscapeGameEngine {
     constructor(storyData, config = {}) {
         this.storyData = storyData;
         this.textDisplayId = config.textDisplayId || 'text-display';
         this.choiceDisplayId = config.choiceDisplayId || 'choice-display';
-        this.statusBadgeId = config.statusBadgeId || 'status-badge';
+        this.statusBadgeId = config.statusBadgeId || 'status-badge'; // 右上バッジは非表示/ボタン用に転用
         this.startSceneKey = config.startSceneKey || 'start';
-        this.saveKey = config.saveKey || 'escape_game_current_scene';
-        this.checkpointKey = config.saveKey + '_floor_checkpoint';
-        this.historyKey = config.saveKey + '_floor_history_v2';
-        this.revealedKey = config.saveKey + '_revealed_floors';
+        this.saveKey = config.saveKey + '_v3';
+        this.checkpointKey = config.saveKey + '_checkpoint_v3';
+        this.historyKey = config.saveKey + '_history_v3';
+        this.revealedKey = config.saveKey + '_revealed_v3';
     }
 
     init() {
         const savedScene = localStorage.getItem(this.saveKey);
         const targetScene = (savedScene && this.storyData[savedScene]) ? savedScene : this.startSceneKey;
         
-        this.floorHistory = JSON.parse(localStorage.getItem(this.historyKey) || '[]');
+        this.routeHistory = JSON.parse(localStorage.getItem(this.historyKey) || '[]');
         this.hasReachedF15 = localStorage.getItem(this.revealedKey) === 'true';
 
         this.renderScene(targetScene);
     }
 
-    // シーンから1階層ごとの単位（または深層の個別状態）を特定する
-    getFloorUnit(sceneKey, scene) {
-        // エンディング
-        if (sceneKey === 'escape_true') return { id: 'escape', name: '地上（生還）', isDeep: false };
+    // シーンからマップ用の一意のノード項目を生成する
+    // 深層（第20階層開始〜第16階層境界まで）は選択肢（シーンID）ごとに積み上げる
+    // 中層・上層は階層単位で積み上げる
+    getMapNodeItem(sceneKey, scene) {
+        if (sceneKey === 'escape_true') return { id: 'escape', name: '地上（生還）' };
 
-        // 第15階層以降（明確な階層がある場合）
         const match = sceneKey.match(/^f(\d+)/);
         if (match) {
             const floorNum = parseInt(match[1], 10);
             if (floorNum <= 15) {
-                return { id: `f${floorNum}`, name: `第${floorNum}階層`, isDeep: false };
+                return { id: `f${floorNum}`, name: `第${floorNum}階層` };
             }
         }
 
-        // 第15階層より下（深層・未踏域：15階層までは現在地不明の別表記）
-        return { id: sceneKey, name: scene.status || '未知の深淵（現在地不明）', isDeep: true };
+        // 深層（第20階層〜第16階層、およびスタート地点等）は選択肢/シーンごとに個別表示
+        let displayName = scene.status || sceneKey;
+        return { id: sceneKey, name: displayName };
+    }
+
+    // どのエリアに属するかを判定（ゲームオーバー時の正しいリトライ先決定用）
+    getAreaType(sceneKey) {
+        if (sceneKey.startsWith('f10') || sceneKey.startsWith('f9') || sceneKey.startsWith('f8') || 
+            sceneKey.startsWith('f7') || sceneKey.startsWith('f6') || sceneKey.startsWith('f5') || 
+            sceneKey.startsWith('f4') || sceneKey.startsWith('f3') || sceneKey.startsWith('f2') || 
+            sceneKey.startsWith('f1') || sceneKey.startsWith('escape')) {
+            return 'upper'; // 上層
+        }
+        if (sceneKey.startsWith('f15') || sceneKey.startsWith('f14') || sceneKey.startsWith('f13') || 
+            sceneKey.startsWith('f12') || sceneKey.startsWith('f11')) {
+            return 'mid'; // 中層
+        }
+        return 'deep'; // 深層
+    }
+
+    // 各エリアのチェックポイント（最初）のシーンキーを返す
+    getAreaCheckpoint(areaType) {
+        switch(areaType) {
+            case 'upper': return 'f10_p1';
+            case 'mid': return 'f15_p1';
+            case 'deep': 
+            default: return 'start';
+        }
     }
 
     checkF15Reached(sceneKey) {
@@ -64,34 +90,53 @@ class EscapeGameEngine {
 
         this.checkF15Reached(sceneKey);
 
-        const currentUnit = this.getFloorUnit(sceneKey, scene);
+        const nodeItem = this.getMapNodeItem(sceneKey, scene);
         const isGameOver = !scene.choices || scene.choices.length === 0;
+        const currentArea = this.getAreaType(sceneKey);
 
-        // 履歴にまだ含まれていない場合のみ、新しい階層/地点を下から積み上げる形で追加
+        // チェックポイント（エリアの最初）を保存
         if (!isGameOver) {
-            const lastRecorded = this.floorHistory[this.floorHistory.length - 1];
-            if (!lastRecorded || lastRecorded.id !== currentUnit.id) {
-                this.floorHistory.push(currentUnit);
-                localStorage.setItem(this.historyKey, JSON.stringify(this.floorHistory));
+            localStorage.setItem(this.checkpointKey, currentArea);
+        }
+
+        // 履歴に追加（重複追加防止、下から上へ積み上げるため配列に追加）
+        if (!isGameOver) {
+            const lastItem = this.routeHistory[this.routeHistory.length - 1];
+            if (!lastItem || lastItem.id !== nodeItem.id) {
+                this.routeHistory.push(nodeItem);
+                localStorage.setItem(this.historyKey, JSON.stringify(this.routeHistory));
             }
         }
 
         localStorage.setItem(this.saveKey, sceneKey);
 
-        // ゲームオーバー時のリトライ用チェックポイント（深層・中層・上層の大まかな区切りへ）
-        if (!isGameOver) {
-            localStorage.setItem(this.checkpointKey, sceneKey);
-        }
-
+        // テキスト表示
         const textDisplay = document.getElementById(this.textDisplayId);
-        const statusBadge = document.getElementById(this.statusBadgeId);
-
         if (textDisplay) textDisplay.innerHTML = scene.text;
-        if (statusBadge) statusBadge.innerText = scene.status;
+
+        // 右上バッジ部分を「最初からやり直す」ボタンに変更
+        const statusBadge = document.getElementById(this.statusBadgeId);
+        if (statusBadge) {
+            statusBadge.innerHTML = '';
+            const headerResetBtn = document.createElement('button');
+            headerResetBtn.className = 'btn-small-reset';
+            headerResetBtn.innerText = '最初からやり直す';
+            headerResetBtn.onclick = () => {
+                if (confirm('最初からやり直しますか？（セーブデータとルート記録が削除されます）')) {
+                    localStorage.removeItem(this.saveKey);
+                    localStorage.removeItem(this.checkpointKey);
+                    localStorage.removeItem(this.historyKey);
+                    localStorage.removeItem(this.revealedKey);
+                    this.routeHistory = [];
+                    this.hasReachedF15 = false;
+                    this.renderScene(this.startSceneKey);
+                }
+            };
+            statusBadge.appendChild(headerResetBtn);
+        }
 
         const choiceDisplay = document.getElementById(this.choiceDisplayId);
         if (!choiceDisplay) return;
-
         choiceDisplay.innerHTML = '';
 
         const hasChoices = scene.choices && scene.choices.length > 0;
@@ -108,25 +153,13 @@ class EscapeGameEngine {
                 choiceDisplay.appendChild(button);
             });
         } else if (!isEnding) {
-            // 【ゲームオーバー時】所属する大階層の最初へ戻る
-            const savedSceneKey = localStorage.getItem(this.checkpointKey) || 'start';
-            let retryTarget = 'start';
-            if (savedSceneKey.startsWith('f10') || savedSceneKey.startsWith('f9') || savedSceneKey.startsWith('f8') || 
-                savedSceneKey.startsWith('f7') || savedSceneKey.startsWith('f6') || savedSceneKey.startsWith('f5') || 
-                savedSceneKey.startsWith('f4') || savedSceneKey.startsWith('f3') || savedSceneKey.startsWith('f2') || 
-                savedSceneKey.startsWith('f1')) {
-                retryTarget = 'f10_p1';
-            } else if (savedSceneKey.startsWith('f15') || savedSceneKey.startsWith('f14') || savedSceneKey.startsWith('f13') || 
-                       savedSceneKey.startsWith('f12') || savedSceneKey.startsWith('f11')) {
-                retryTarget = 'f15_p1';
-            } else if (savedSceneKey.startsWith('f20') || savedSceneKey.startsWith('f19') || savedSceneKey.startsWith('f18') || 
-                       savedSceneKey.startsWith('f17') || savedSceneKey.startsWith('f16')) {
-                retryTarget = 'f20_p1';
-            }
+            // 【ゲームオーバー時】所属エリアの最初へ正確に戻るリトライボタン
+            const savedArea = localStorage.getItem(this.checkpointKey) || 'deep';
+            const retryTarget = this.getAreaCheckpoint(savedArea);
 
             const checkpointBtn = document.createElement('button');
             checkpointBtn.className = 'btn btn-retry';
-            checkpointBtn.innerText = 'この階層の最初からやり直す';
+            checkpointBtn.innerText = 'このエリアの最初からやり直す';
             checkpointBtn.onclick = () => {
                 this.renderScene(retryTarget);
             };
@@ -141,32 +174,11 @@ class EscapeGameEngine {
         }
 
         // 下から上への縦積みマップ描画
-        this.renderRouteMap(currentUnit.id, isGameOver);
-
-        const restartContainer = document.createElement('div');
-        restartContainer.className = 'restart-container';
-
-        const restartBtn = document.createElement('button');
-        restartBtn.className = 'btn-small-reset';
-        restartBtn.innerText = '最初からやり直す（セーブ＆記録消去）';
-        restartBtn.onclick = () => {
-            if (confirm('最初からやり直しますか？（セーブデータとルート記録が削除されます）')) {
-                localStorage.removeItem(this.saveKey);
-                localStorage.removeItem(this.checkpointKey);
-                localStorage.removeItem(this.historyKey);
-                localStorage.removeItem(this.revealedKey);
-                this.floorHistory = [];
-                this.hasReachedF15 = false;
-                this.renderScene(this.startSceneKey);
-            }
-        };
-
-        restartContainer.appendChild(restartBtn);
-        choiceDisplay.appendChild(restartContainer);
+        this.renderRouteMap(nodeItem.id, isGameOver);
     }
 
     // 下から上へ積み上がる筒状マップを描画する関数
-    renderRouteMap(currentUnitId, isGameOver) {
+    renderRouteMap(currentNodeId, isGameOver) {
         let routeMapContainer = document.getElementById('route-map-container');
         if (!routeMapContainer) {
             routeMapContainer = document.createElement('div');
@@ -180,29 +192,27 @@ class EscapeGameEngine {
 
         const mapTitle = document.createElement('div');
         mapTitle.className = 'route-map-title';
-        mapTitle.innerText = '🗺️ 通過ルート記録（下から上へ積み上げ）';
+        mapTitle.innerText = '🗺️ 通過ルート（下から上へ積み上げ）';
         routeMapContainer.appendChild(mapTitle);
 
         const scrollWrapper = document.createElement('div');
         scrollWrapper.className = 'route-scroll-wrapper';
 
-        // 表示用に履歴をコピーし、下から上（古いものが下、新しいものが上）へ並べる
-        // ※ もし履歴が空なら現在地のみを表示
-        let displayList = [...this.floorHistory];
+        // 履歴が空の場合は現在のノードを1つだけ表示
+        let displayList = [...this.routeHistory];
         if (displayList.length === 0) {
-            displayList = [{ id: currentUnitId, name: '未知の最深部（落下直後）' }];
+            const currentScene = this.storyData[currentNodeId] || {};
+            displayList = [{ id: currentNodeId, name: currentScene.status || '未知の最深部（落下直後）' }];
         }
 
-        // 下から上へ積み上げるため、配列をそのまま順に下から配置（CSSでflex-direction: column-reverseにするか、逆順ループ）
-        // ここでは配列の最後（最新）が一番上、または一番下にくるように調整。
-        // 一般的な縦積みタワー：上が上層（出口）、下が深層。そのため、古いものが下、新しいものが上へ積み重なる。
         let activeElement = null;
 
+        // 下から上へ積み上げるため、古いものを下、新しいものを上へ並べる
         displayList.forEach((item, index) => {
             const floorNode = document.createElement('div');
             floorNode.className = 'route-floor-item';
 
-            const isCurrent = (item.id === currentUnitId);
+            const isCurrent = (item.id === currentNodeId);
 
             if (isCurrent) {
                 floorNode.classList.add('floor-current');
