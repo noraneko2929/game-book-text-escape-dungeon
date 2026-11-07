@@ -35,7 +35,7 @@ class EscapeGameEngine {
             }
         }
 
-        let displayName = scene.status || sceneKey;
+        let displayName = (scene && scene.status) ? scene.status : sceneKey;
         return { id: sceneKey, name: displayName };
     }
 
@@ -171,7 +171,11 @@ class EscapeGameEngine {
             routeMapContainer.id = 'route-map-container';
             routeMapContainer.className = 'route-map-container';
             const gameContainer = document.querySelector('.game-container');
-            gameContainer.insertBefore(routeMapContainer, document.querySelector('.text-area'));
+            if (gameContainer) {
+                gameContainer.insertBefore(routeMapContainer, document.querySelector('.text-area'));
+            } else {
+                document.body.appendChild(routeMapContainer);
+            }
         }
 
         routeMapContainer.innerHTML = '';
