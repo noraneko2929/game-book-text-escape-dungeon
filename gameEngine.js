@@ -1,6 +1,6 @@
 /**
  * gameEngine.js
- * ゲームの描画・状態管理ライブラリ（リトライ時のマップ履歴同期対応版）
+ * ゲームの描画・状態管理ライブラリ（全履歴積み上げ＆縦スクロール対応修正版）
  */
 class EscapeGameEngine {
     constructor(storyData, config = {}) {
@@ -9,10 +9,10 @@ class EscapeGameEngine {
         this.choiceDisplayId = config.choiceDisplayId || 'choice-display';
         this.statusBadgeId = config.statusBadgeId || 'status-badge';
         this.startSceneKey = config.startSceneKey || 'start';
-        this.saveKey = config.saveKey + '_v6';
-        this.checkpointKey = config.saveKey + '_rank_checkpoint_v6';
-        this.historyKey = config.saveKey + '_history_v6';
-        this.revealedKey = config.saveKey + '_revealed_v6';
+        this.saveKey = config.saveKey + '_v7';
+        this.checkpointKey = config.saveKey + '_rank_checkpoint_v7';
+        this.historyKey = config.saveKey + '_history_v7';
+        this.revealedKey = config.saveKey + '_revealed_v7';
     }
 
     init() {
@@ -78,7 +78,6 @@ class EscapeGameEngine {
         });
     }
 
-    // リトライ時にマップ履歴をリトライ先（現在地）までのものに切り詰める（同期する）
     syncHistoryUpTo(targetSceneKey) {
         const targetScene = this.storyData[targetSceneKey];
         if (!targetScene) return;
@@ -86,10 +85,8 @@ class EscapeGameEngine {
 
         const index = this.routeHistory.findIndex(item => item.id === targetItem.id);
         if (index !== -1) {
-            // 履歴の中にリトライ先があれば、そこまででスライスする
             this.routeHistory = this.routeHistory.slice(0, index + 1);
         } else {
-            // 履歴になければ、リトライ先ノードを末尾にするかリセット
             this.routeHistory = [targetItem];
         }
         localStorage.setItem(this.historyKey, JSON.stringify(this.routeHistory));
@@ -113,7 +110,7 @@ class EscapeGameEngine {
             localStorage.setItem(this.saveKey, sceneKey);
         }
 
-        // 履歴に追加
+        // 履歴に正しくノードを追加（重複を抑えつつ下から上へ積み上げるデータ）
         if (!isGameOver) {
             const lastItem = this.routeHistory[this.routeHistory.length - 1];
             if (!lastItem || lastItem.id !== nodeItem.id) {
@@ -176,7 +173,6 @@ class EscapeGameEngine {
             checkpointBtn.className = 'btn btn-retry';
             checkpointBtn.innerText = 'ランク規定位置からやり直す';
             checkpointBtn.onclick = () => {
-                // 【重要】リトライ時にマップ履歴をリトライ先まで巻き戻して同期する
                 this.syncHistoryUpTo(retryTarget);
                 this.renderScene(retryTarget);
             };
@@ -193,6 +189,7 @@ class EscapeGameEngine {
         this.renderRouteMap(nodeItem.id, isGameOver);
     }
 
+    // 全履歴を下から上へ積み上げ、動的にスクロール可能にするマップ描画関数
     renderRouteMap(currentNodeId, isGameOver) {
         let routeMapContainer = document.getElementById('route-map-container');
         if (!routeMapContainer) {
@@ -207,7 +204,7 @@ class EscapeGameEngine {
 
         const mapTitle = document.createElement('div');
         mapTitle.className = 'route-map-title';
-        mapTitle.innerText = '🗺️ 探索ルートマップ（中央固定・全体スクロール）';
+        mapTitle.innerText = '🗺️ 階層探索マップ';
         routeMapContainer.appendChild(mapTitle);
 
         const scrollLayer = document.createElement('div');
@@ -219,33 +216,42 @@ class EscapeGameEngine {
             displayList = [{ id: currentNodeId, name: currentScene.status || '未知の最深部（落下直後）' }];
         }
 
-        let currentIndex = displayList.findIndex(item => item.id === currentNodeId);
-        if (currentIndex === -1) currentIndex = displayList.length - 1;
+        let activeElement = null;
 
-        const prevItem = currentIndex > 0 ? displayList[currentIndex - 1] : null;
-        const currentItem = displayList[currentIndex];
-        const nextItem = currentIndex < displayList.length - 1 ? displayList[currentIndex + 1] : null;
+        // 全件ループにより、進んだ分だけ階層ノードとコネクターが増えるように修正
+        displayList.forEach((item, index) => {
+            const isCurrent = (item.id === currentNodeId || index === displayList.length - 1);
 
-        scrollLayer.innerHTML = `
-            <div class="route-floor-item ${nextItem ? 'floor-passed' : 'floor-empty'}">
+            const floorItem = document.createElement('div');
+            floorItem.className = `route-floor-item ${isCurrent ? 'floor-current' : 'floor-passed'} ${isCurrent && isGameOver ? 'floor-dead' : ''}`;
+            
+            floorItem.innerHTML = `
                 <div class="floor-dot"></div>
-                <div class="floor-label">${nextItem ? nextItem.name : '？？？'}</div>
-            </div>
-            <div class="floor-connector ${nextItem ? 'connector-active' : ''}"></div>
+                <div class="floor-label">${item.name} ${isCurrent ? '（現在地）' : ''}</div>
+            `;
 
-            <div class="route-floor-item floor-current ${isGameOver ? 'floor-dead' : ''}">
-                <div class="floor-dot"></div>
-                <div class="floor-label">${currentItem.name} （現在地）</div>
-            </div>
-            <div class="floor-connector ${prevItem ? 'connector-active' : ''}"></div>
+            scrollLayer.appendChild(floorItem);
 
-            <div class="route-floor-item ${prevItem ? 'floor-passed' : 'floor-empty'}">
-                <div class="floor-dot"></div>
-                <div class="floor-label">${prevItem ? prevItem.name : 'スタート'}</div>
-            </div>
-        `;
+            if (isCurrent) {
+                activeElement = floorItem;
+            }
+
+            // アイテム同士を繋ぐ垂直コネクター（線）
+            if (index < displayList.length - 1) {
+                const connector = document.createElement('div');
+                connector.className = 'floor-connector connector-active';
+                scrollLayer.appendChild(connector);
+            }
+        });
 
         routeMapContainer.appendChild(scrollLayer);
+
+        // 現在地へ視点を自動追従スクロール
+        setTimeout(() => {
+            if (activeElement) {
+                scrollLayer.scrollTop = activeElement.offsetTop - (scrollLayer.clientHeight / 2) + (activeElement.clientHeight / 2);
+            }
+        }, 30);
     }
 }
 
