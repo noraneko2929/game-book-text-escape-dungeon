@@ -1,6 +1,6 @@
 /**
  * gameEngine.js
- * ゲームの描画・状態管理ライブラリ（滑らかなスクロール演出＆初期階層対応版）
+ * ゲームの描画・状態管理ライブラリ（初期表示・階層積み上げ順序完全修正版）
  */
 class EscapeGameEngine {
     constructor(storyData, config = {}) {
@@ -10,9 +10,9 @@ class EscapeGameEngine {
         this.statusBadgeId = config.statusBadgeId || 'status-badge';
         this.startSceneKey = config.startSceneKey || 'start';
         this.saveKey = (config.saveKey || 'escape_game') + '_save_rank';
-        this.historyKey = (config.saveKey || 'escape_game') + '_history_v15';
-        this.checkpointKey = (config.saveKey || 'escape_game') + '_checkpoint_v15';
-        this.revealedKey = (config.saveKey || 'escape_game') + '_revealed_v15';
+        this.historyKey = (config.saveKey || 'escape_game') + '_history_v18';
+        this.checkpointKey = (config.saveKey || 'escape_game') + '_checkpoint_v18';
+        this.revealedKey = (config.saveKey || 'escape_game') + '_revealed_v18';
         this.isAnimating = false;
     }
 
@@ -229,39 +229,45 @@ class EscapeGameEngine {
 
         const itemsToRender = [];
 
-        // 1. 履歴の順番を正しく整理（上が「？？？/未来」、真ん中が「現在地」、下が「過去」）
-        const reversedHistory = [...displayList].reverse();
-        
-        reversedHistory.forEach((item, index) => {
-            const isCurrent = (item.id === currentNodeId || index === 0);
-            let stateClass = isCurrent ? 'floor-current' : 'floor-passed';
-            if (isCurrent && isGameOver) stateClass = 'floor-dead';
-
-            let displayName = item.name;
-            if (animateAdvance && item.id === targetAnimatingId && isCurrent) {
-                displayName = '？？？ (未到達)';
-                stateClass = 'floor-unknown';
-            } else {
-                const sceneObj = this.storyData[item.id] || {};
-                const resolvedNode = this.getMapNodeItem(item.id, sceneObj);
-                displayName = `${resolvedNode.name}${isCurrent ? '（現在地）' : ''}`;
-            }
-
-            itemsToRender.push({
-                type: 'floor',
-                id: item.id,
-                name: displayName,
-                className: stateClass
-            });
-        });
-
-        // 2. 最上部に「？？？ (未到達)」枠をさらに追加（まだゲームオーバー・エンディングでなければ）
+        // 1. 【上】常に最新の未到達階層（？？？）を配置
         if (!isGameOver && !isEnding) {
-            itemsToRender.unshift({
+            itemsToRender.push({
                 type: 'floor',
                 id: 'unknown_next',
                 name: '？？？ (未到達)',
                 className: 'floor-unknown'
+            });
+        }
+
+        // 2. 【中】現在地（displayListの最後尾）
+        const currentItem = displayList[displayList.length - 1] || { id: currentNodeId, name: '現在地' };
+        const currentSceneObj = this.storyData[currentItem.id] || {};
+        const resolvedCurrent = this.getMapNodeItem(currentItem.id, currentSceneObj);
+        
+        let currentClass = isGameOver ? 'floor-current floor-dead' : 'floor-current';
+        if (animateAdvance && currentItem.id === targetAnimatingId) {
+            resolvedCurrent.name = '？？？ (未到達)';
+            currentClass = 'floor-unknown';
+        }
+
+        itemsToRender.push({
+            type: 'floor',
+            id: currentItem.id,
+            name: `${resolvedCurrent.name}（現在地）`,
+            className: currentClass
+        });
+
+        // 3. 【下】過去の履歴（直前の階層から順に下へ、最大2つまで蓄積順に表示）
+        for (let i = displayList.length - 2; i >= 0; i--) {
+            const histItem = displayList[i];
+            const histSceneObj = this.storyData[histItem.id] || {};
+            const resolvedHist = this.getMapNodeItem(histItem.id, histSceneObj);
+
+            itemsToRender.push({
+                type: 'floor',
+                id: histItem.id,
+                name: resolvedHist.name,
+                className: 'floor-passed'
             });
         }
 
@@ -278,7 +284,7 @@ class EscapeGameEngine {
 
             if (index < itemsToRender.length - 1) {
                 const connector = document.createElement('div');
-                const isNextUnknown = itemsToRender[index + 1].className === 'floor-unknown';
+                const isNextUnknown = itemsToRender[index + 1].className.includes('floor-unknown');
                 connector.className = `floor-connector ${!isNextUnknown ? 'connector-active' : ''}`;
                 scrollLayer.appendChild(connector);
             }
@@ -286,24 +292,20 @@ class EscapeGameEngine {
 
         routeMapContainer.appendChild(scrollLayer);
 
-        // 初期階層など、スクロール余地がない（高さが足りない）場合はアニメーションをスキップして安全に配置
-        const maxScrollTop = scrollLayer.scrollHeight - scrollLayer.clientHeight;
+        const activeElement = scrollLayer.querySelector('.floor-current') || scrollLayer.children[0];
 
-        if (animateAdvance && maxScrollTop > 0) {
-            // ① 最初に「？？？枠」の高さ分だけ下にずらした位置からスタート
+        if (animateAdvance) {
+            // アニメーション演出（上に「？？？枠」が挿入されてスクロールアップする演出）
             scrollLayer.scrollTop = 42;
 
             setTimeout(() => {
-                // ② 宛先（トップ＝0）へ向けて、時間をかけてゆっくりスクロールアップ（アニメーションに見せる）
                 scrollLayer.scrollTo({
                     top: 0,
                     behavior: 'smooth'
                 });
 
-                // ③ スクロールが中央（トップ）に到達した頃合い（約700ms後）に、正式な階層名へ書き換える
                 setTimeout(() => {
                     const topItems = scrollLayer.querySelectorAll('.route-floor-item');
-                    // 上から2番目（スクロールアップして中央に来たアイテム）を現在地として正式名称にする
                     const targetItem = topItems.length > 1 ? topItems[1] : topItems[0];
                     
                     if (targetItem) {
@@ -328,7 +330,12 @@ class EscapeGameEngine {
             }, 50);
         } else {
             setTimeout(() => {
-                scrollLayer.scrollTop = 0;
+                if (activeElement) {
+                    const targetOffset = activeElement.offsetTop - (scrollLayer.clientHeight / 2) + (activeElement.clientHeight / 2);
+                    scrollLayer.scrollTop = Math.max(0, targetOffset);
+                } else {
+                    scrollLayer.scrollTop = 0;
+                }
                 this.isAnimating = false;
             }, 10);
         }
