@@ -1,6 +1,6 @@
 /**
  * gameEngine.js
- * ゲームの描画・状態管理ライブラリ（3スロット固定・オートスクロール復帰版）
+ * ゲームの描画・状態管理ライブラリ（3スロット固定・オートスクロール最上部固定対応版）
  */
 class EscapeGameEngine {
     constructor(storyData, config = {}) {
@@ -10,8 +10,8 @@ class EscapeGameEngine {
         this.statusBadgeId = config.statusBadgeId || 'status-badge';
         this.startSceneKey = config.startSceneKey || 'start';
         this.saveKey = (config.saveKey || 'escape_game') + '_save_rank';
-        this.historyKey = (config.saveKey || 'escape_game') + '_history_v11';
-        this.checkpointKey = (config.saveKey || 'escape_game') + '_checkpoint_v11';
+        this.historyKey = (config.saveKey || 'escape_game') + '_history_v12';
+        this.checkpointKey = (config.saveKey || 'escape_game') + '_checkpoint_v12';
     }
 
     init() {
@@ -190,12 +190,23 @@ class EscapeGameEngine {
             displayList = [{ id: currentNodeId, name: currentScene.status || '未知の最深部' }];
         }
 
-        // 通過履歴リスト
         const itemsToRender = [];
+        const isEnding = currentNodeId.startsWith('escape_');
 
-        // 1. 通過済み／現在地のフロアアイテムを作成
-        displayList.forEach((item, index) => {
-            const isCurrent = (item.id === currentNodeId || index === displayList.length - 1);
+        // 1. 最上部に未到達階層（？？？）を追加
+        if (!isGameOver && !isEnding) {
+            itemsToRender.push({
+                type: 'floor',
+                id: 'unknown_next',
+                name: '？？？ (未到達)',
+                className: 'floor-unknown'
+            });
+        }
+
+        // 2. 現在地から過去へ向かう順序に調整して追加
+        const reversedHistory = [...displayList].reverse();
+        reversedHistory.forEach((item, index) => {
+            const isCurrent = (item.id === currentNodeId || index === 0);
             let stateClass = isCurrent ? 'floor-current' : 'floor-passed';
             if (isCurrent && isGameOver) stateClass = 'floor-dead';
 
@@ -207,18 +218,7 @@ class EscapeGameEngine {
             });
         });
 
-        // 2. ゲーム進行中（ゲームオーバー・クリア以外）なら先頭（最上部）に未到達階層「？？？」を追加
-        const isEnding = currentNodeId.startsWith('escape_');
-        if (!isGameOver && !isEnding) {
-            itemsToRender.push({
-                type: 'floor',
-                id: 'unknown_next',
-                name: '？？？ (未到達)',
-                className: 'floor-unknown'
-            });
-        }
-
-        // DOM構築（下から上へと接続していく）
+        // DOM構築
         itemsToRender.forEach((item, index) => {
             const floorItem = document.createElement('div');
             floorItem.className = `route-floor-item ${item.className}`;
@@ -228,18 +228,17 @@ class EscapeGameEngine {
             `;
             scrollLayer.appendChild(floorItem);
 
-            // 要素間にコネクターを接続
             if (index < itemsToRender.length - 1) {
                 const connector = document.createElement('div');
-                const isPassedConn = index < itemsToRender.length - 2;
-                connector.className = `floor-connector ${isPassedConn ? 'connector-active' : ''}`;
+                const isNextUnknown = itemsToRender[index + 1].className === 'floor-unknown';
+                connector.className = `floor-connector ${!isNextUnknown ? 'connector-active' : ''}`;
                 scrollLayer.appendChild(connector);
             }
         });
 
         routeMapContainer.appendChild(scrollLayer);
 
-        // ゲーム画面切り替え時は即座にオートスクロールを上端（最新の位置）へ戻す
+        // シーン切り替え時はスクロール位置を常に最上部へ強制移動
         setTimeout(() => {
             scrollLayer.scrollTop = 0;
         }, 10);
