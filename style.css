@@ -11,11 +11,10 @@ body {
     box-sizing: border-box;
 }
 
-/* 画面の大枠：選択肢3つ表示時のサイズに合わせて高さを固定 */
 .game-container {
     width: 100%;
     max-width: 600px;
-    height: 680px; /* 固定高さ */
+    height: 680px;
     background-color: #1e1e24;
     border-radius: 12px;
     padding: 25px;
@@ -49,7 +48,7 @@ body {
     border: none;
 }
 
-/* 階層マップUIレイヤー全体のスタイル */
+/* 🗺️ マップUIレイヤー全体のスタイル */
 .route-map-container {
     background-color: #16161a;
     border: 1px solid #2e2e38;
@@ -67,7 +66,6 @@ body {
     font-weight: bold;
 }
 
-/* 高さ130px：ちょうど3フロア＋コネクターが表示される高さ */
 .route-scroll-layer {
     height: 130px;
     overflow-y: auto;
@@ -77,13 +75,10 @@ body {
     padding: 6px 0;
     box-sizing: border-box;
     scroll-behavior: smooth;
-
-    /* スクロールバーを非表示にする設定 */
-    -ms-overflow-style: none;  /* IE and Edge */
-    scrollbar-width: none;  /* Firefox */
+    -ms-overflow-style: none;
+    scrollbar-width: none;
 }
 
-/* Chrome, Safari, Opera でスクロールバーを非表示 */
 .route-scroll-layer::-webkit-scrollbar {
     display: none;
 }
@@ -120,7 +115,6 @@ body {
     text-overflow: ellipsis;
 }
 
-/* 過去に通過した階層 */
 .floor-passed {
     border-color: #4caf50;
     color: #ffffff;
@@ -129,7 +123,6 @@ body {
     background-color: #4caf50;
 }
 
-/* 現在地 */
 .floor-current {
     background-color: #1a2736;
     border-color: #2196f3;
@@ -142,7 +135,6 @@ body {
     box-shadow: 0 0 6px #2196f3;
 }
 
-/* 次の未到達階層（？？？） */
 .floor-unknown {
     background-color: #18181f;
     border-color: #333340;
@@ -153,7 +145,6 @@ body {
     background-color: #444455;
 }
 
-/* 死亡時 */
 .floor-dead {
     background-color: #361a1a;
     border-color: #f44336;
@@ -173,7 +164,6 @@ body {
     background-color: #4caf50;
 }
 
-/* テキストエリア：残りの縦スペースを埋める */
 .text-area {
     font-size: 1.05rem;
     line-height: 1.7;
@@ -183,14 +173,13 @@ body {
     overflow-y: auto;
 }
 
-/* 選択肢エリア：下部に固定 */
 .choice-container {
     display: flex;
     flex-direction: column;
     gap: 12px;
     margin-bottom: 5px;
     flex-shrink: 0;
-    min-height: 180px; /* 選択肢3つ分＋隙間の高さを確保 */
+    min-height: 180px;
     justify-content: flex-start;
 }
 
