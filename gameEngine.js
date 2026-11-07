@@ -1,6 +1,6 @@
 /**
  * gameEngine.js
- * ゲームの描画・状態管理ライブラリ（クリア判定の修正版）
+ * ゲームの描画・状態管理ライブラリ（生還時の名称・未到達表示修正版）
  */
 class EscapeGameEngine {
     constructor(storyData, config = {}) {
@@ -30,7 +30,9 @@ class EscapeGameEngine {
     }
 
     getMapNodeItem(sceneKey, scene) {
-        if (sceneKey === 'escape_true') return { id: 'escape', name: '地上（生還）' };
+        if (sceneKey.startsWith('escape')) {
+            return { id: sceneKey, name: '地上への生還' };
+        }
 
         const match = sceneKey.match(/^f(\d+)/);
         if (match) {
@@ -111,21 +113,11 @@ class EscapeGameEngine {
         this.updateCheckpoint(sceneKey);
 
         const nodeItem = this.getMapNodeItem(sceneKey, scene);
-        const isEnding = sceneKey.startsWith('escape_');
-        // 生還（エンディング）時は choices がなくてもゲームオーバーとみなさない
+        const isEnding = sceneKey.startsWith('escape');
         const isGameOver = (!scene.choices || scene.choices.length === 0) && !isEnding;
 
         let isNewFloorAdvanced = false;
-        if (!isGameOver && !isEnding) {
-            localStorage.setItem(this.saveKey, sceneKey);
-            if (!oldLastItem || oldLastItem.id !== nodeItem.id) {
-                if (oldLastItem) {
-                    isNewFloorAdvanced = true;
-                }
-                this.routeHistory.push(nodeItem);
-                localStorage.setItem(this.historyKey, JSON.stringify(this.routeHistory));
-            }
-        } else if (isEnding) {
+        if (!isGameOver) {
             localStorage.setItem(this.saveKey, sceneKey);
             if (!oldLastItem || oldLastItem.id !== nodeItem.id) {
                 if (oldLastItem) {
@@ -239,7 +231,7 @@ class EscapeGameEngine {
 
         const itemsToRender = [];
 
-        // 1. 【上】未到達階層（？？？）
+        // 1. 【上】未到達階層（？？？） ※ゲームオーバー時やエンディング（生還時）には表示しない
         if (!isGameOver && !isEnding) {
             itemsToRender.push({
                 type: 'floor',
