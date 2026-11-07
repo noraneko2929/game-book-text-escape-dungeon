@@ -49,7 +49,7 @@
             border: none;
         }
 
-        /* 🗺️ マップUIレイヤー全体のスタイル（3スロット固定・中央表示） */
+        /* 🗺️ マップUIレイヤー全体のスタイル */
         .route-map-container {
             background-color: #16161a;
             border: 1px solid #2e2e38;
@@ -72,7 +72,7 @@
             display: flex;
             flex-direction: column-reverse;
             align-items: center;
-            gap: 2px;
+            /* gapを使わず、明示的なコネクター要素の高さとマージンで上下を接続する */
             padding: 10px 0;
             scroll-behavior: smooth;
         }
@@ -89,6 +89,7 @@
             max-width: 300px;
             height: 28px;
             box-sizing: border-box;
+            flex-shrink: 0;
             transition: all 0.2s ease;
         }
 
@@ -97,6 +98,7 @@
             height: 8px;
             border-radius: 50%;
             background-color: #555566;
+            flex-shrink: 0;
         }
 
         .floor-label {
@@ -136,19 +138,11 @@
             background-color: #f44336;
         }
 
-        .floor-empty {
-            opacity: 0.3;
-            border-style: dashed;
-        }
-
         .floor-connector {
             width: 2px;
-            height: 12px;
-            background-color: #3f3f4f;
-        }
-
-        .connector-active {
+            height: 14px;
             background-color: #4caf50;
+            flex-shrink: 0;
         }
 
         /* テキストエリア */
