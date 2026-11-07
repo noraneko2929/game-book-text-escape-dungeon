@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>地下ダンジョン脱出ゲーム：暗黒回廊からの生還</title>
     <style>
-        /* 全体のダークモード風デザイン */
         body {
             font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
             background-color: #121214;
@@ -28,7 +27,6 @@
             border: 1px solid #2e2e38;
         }
 
-        /* ヘッダー・ステータス表示 */
         .header {
             display: flex;
             justify-content: space-between;
@@ -53,6 +51,53 @@
             color: #a0a0ab;
         }
 
+        /* 🗺️ ネットワークマップUIのスタイル */
+        .route-map-container {
+            background-color: #16161a;
+            border: 1px solid #2e2e38;
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 20px;
+        }
+
+        .route-map-title {
+            font-size: 0.85rem;
+            color: #a0a0ab;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .route-svg-map {
+            width: 100%;
+            height: 150px;
+            display: block;
+        }
+
+        .map-edge-line {
+            stroke: #3f3f4f;
+            stroke-width: 1.5;
+            stroke-dasharray: 3,3;
+        }
+
+        .map-node-passed {
+            fill: #707080;
+            stroke: #16161a;
+            stroke-width: 1.5;
+        }
+
+        .map-node-current {
+            fill: #2196f3;
+            stroke: #ffffff;
+            stroke-width: 2;
+            filter: drop-shadow(0 0 4px #2196f3);
+        }
+
+        .map-node-dead {
+            fill: #f44336;
+            stroke: #16161a;
+            stroke-width: 1.5;
+        }
+
         /* テキストエリア */
         .text-area {
             font-size: 1.05rem;
@@ -62,7 +107,6 @@
             white-space: pre-wrap;
         }
 
-        /* 選択肢ボタンエリア */
         .choice-container {
             display: flex;
             flex-direction: column;
@@ -88,11 +132,6 @@
             transform: translateY(-1px);
         }
 
-        .btn:active {
-            transform: translateY(1px);
-        }
-
-        /* ゲームオーバー時の直前選択肢リトライボタン */
         .btn-retry {
             background-color: #3a2a1e;
             border-color: #5a402e;
@@ -106,7 +145,6 @@
             border-color: #ffc107;
         }
 
-        /* 「最初からやり直す」控えめなボタン表示 */
         .restart-container {
             margin-top: 15px;
             text-align: center;
@@ -120,7 +158,6 @@
             text-decoration: underline;
             cursor: pointer;
             padding: 5px 10px;
-            transition: color 0.2s ease;
         }
 
         .btn-small-reset:hover {
@@ -139,14 +176,10 @@
         <div id="status-badge" class="badge">探索中</div>
     </div>
     
-    <!-- 物語が表示される場所 -->
     <div id="text-display" class="text-area"></div>
-    
-    <!-- 選択肢ボタンが表示される場所 -->
     <div id="choice-display" class="choice-container"></div>
 </div>
 
-    <!-- 外部JavaScriptファイルの読み込み -->
     <script src="storyData.js"></script>
     <script src="gameEngine.js"></script>
 </body>
