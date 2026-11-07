@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI生成テキスト脱出ゲーム：極秘研究所からの脱出</title>
+    <title>地下ダンジョン脱出ゲーム：暗黒回廊からの生還</title>
     <style>
         /* 全体のダークモード風デザイン */
         body {
@@ -123,93 +123,6 @@
     <!-- 選択肢ボタンが表示される場所 -->
     <div id="choice-display" class="choice-container"></div>
 </div>
-
-<!--
-<script>
-    // ゲームの全シナリオデータ（データ構造を変更すれば、別ゲームの自動生成も容易です）
-    const storyData = {
-        start: {
-            text: "冷たいアラーム音で目が覚めた。辺りは薄暗く、見慣れない精密機械に囲まれている。どうやら極秘の生体研究所に閉じ込められてしまったようだ。\n\n正面には重厚な『電子ロック式の扉』、右手にはダクトから風が吹き出す『換気口』がある。壁の警告灯が赤く点滅し、空気の供給が止まりつつあることを示している。",
-            choices: [
-                { text: "正面の扉を調べて電子ロックに挑む", next: "door_look" },
-                { text: "換気口のカバーを外して中に入る", next: "vent_look" }
-            ],
-            status: "探索中"
-        },
-        door_look: {
-            text: "扉の電子キーパッドには、かすれた文字で『4つの数字を入力してください』と表示されている。\n隣のデスクを見ると、研究員の残したメモに『実験体04号の発見記念日。歴史が動いた日だ。』と殴り書きされている。カレンダーには10月24日に印がついている。",
-            choices: [
-                { text: "暗証番号に『1024』と入力する", next: "escape_door" },
-                { text: "力任せに配線をちぎってショートさせる", next: "door_fail" },
-                { text: "諦めて換気口へ向かう", next: "vent_look" }
-            ],
-            status: "暗号の部屋"
-        },
-        vent_look: {
-            text: "狭い換気口を這って進むと、道が二つに分かれていた。\n左からは『ゴゴゴ…』と怪しい機械の駆動音が聞こえる。右からはかすかに『外の冷たい風』が流れ込んできているようだ。しかし、右の通路の奥には怪しい緑色のガスが漂っているのが見える。",
-            choices: [
-                { text: "左の機械音がする通路へ進む", next: "vent_left" },
-                { text: "右のガスが漂う通路へ飛び込む", next: "vent_right" },
-                { text: "引き返して正面の扉を調べる", next: "door_look" }
-            ],
-            status: "ダクト内"
-        },
-        escape_door: {
-            text: "<span class='success-text'>【生還：正面突破エンド】</span>\n\nピッ、という電子音と共に重い扉がゆっくりと開放された！\n滑り込んだ先は、朝日の差し込む研究所のロータリーだった。あなたは自身の知恵によって、無傷で完全に生還することに成功した。",
-            choices: [],
-            status: "脱出成功！"
-        },
-        door_fail: {
-            text: "<span class='danger-text'>【ゲームオーバー：セキュリティトラップ】</span>\n\nバチバチッ！と激しい火花が散り、強烈な電流が体を駆け抜けた。\n防犯システムが作動し、部屋全体のロックが完全封鎖されてしまう。酸素が薄れゆく中、あなたの意識は遠のいていった…。",
-            choices: [],
-            status: "死亡"
-        },
-        vent_left: {
-            text: "<span class='success-text'>【生還：裏口からの脱出エンド】</span>\n\n通路の先は巨大な換気ファン室だった。幸いにもファンはメンテナンスのため停止している。梯子をよじ登り、天井のハッチを押し開けると、そこは研究所の裏山だった！\n泥だらけになりながらも、あなたは脱出に成功した。",
-            choices: [],
-            status: "脱出成功！"
-        },
-        vent_right: {
-            text: "<span class='danger-text'>【ゲームオーバー：毒ガス充満】</span>\n\n風を頼りに突き進んだが、緑色のガスは研究所が廃棄した猛毒の神経ガスだった！\n激しい咳き込みと共に、一歩も動けなくなってしまう。あと一歩で外の世界だったが、あなたの冒険はここで終わりを迎えた。",
-            choices: [],
-            status: "死亡"
-        }
-    };
-
-    // ゲームの進行を管理する関数
-    function renderScene(sceneKey) {
-        const scene = storyData[sceneKey];
-        
-        // テキストとステータスの更新
-        document.getElementById('text-display').innerHTML = scene.text;
-        document.getElementById('status-badge').innerText = scene.status;
-        
-        const choiceDisplay = document.getElementById('choice-display');
-        choiceDisplay.innerHTML = ''; // ボタンの初期化
-        
-        // 選択肢ボタンの動的生成
-        if (scene.choices.length > 0) {
-            scene.choices.forEach(choice => {
-                const button = document.createElement('button');
-                button.className = 'btn';
-                button.innerText = choice.text;
-                button.onclick = () => renderScene(choice.next);
-                choiceDisplay.appendChild(button);
-            });
-        } else {
-            // エンディングに達した場合のリトライボタン
-            const retryButton = document.createElement('button');
-            retryButton.className = 'btn btn-reset';
-            retryButton.innerText = "最初からやり直す（リトライ）";
-            retryButton.onclick = () => renderScene('start');
-            choiceDisplay.appendChild(retryButton);
-        }
-    }
-
-    // 最初の一歩を起動
-    renderScene('start');
-</script>
--->
 
     <!-- 外部JavaScriptファイルの読み込み -->
     <!-- ※必ず gameEngine.js より前に storyData.js を読み込んでください -->
