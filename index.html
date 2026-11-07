@@ -43,20 +43,20 @@
             margin: 0;
         }
 
-        /* 右上の「最初からやり直す」ボタン配置エリア */
         .badge {
             background: none;
             padding: 0;
             border: none;
         }
 
-        /* 🗺️ 下から上へ積み上がる縦積み筒状マップUIのスタイル */
+        /* 🗺️ マップUIレイヤー全体のスタイル（3スロット固定・中央表示） */
         .route-map-container {
             background-color: #16161a;
             border: 1px solid #2e2e38;
             border-radius: 8px;
             padding: 12px;
             margin-bottom: 20px;
+            overflow: hidden;
         }
 
         .route-map-title {
@@ -66,13 +66,13 @@
             font-weight: bold;
         }
 
-        .route-scroll-wrapper {
-            max-height: 160px;
-            overflow-y: auto;
+        .route-scroll-layer {
+            height: 150px;
+            overflow-y: auto; /* マップ領域ではなくレイヤー全体がスクロール */
             display: flex;
-            flex-direction: column-reverse; /* 下から上へ積み上げる設定 */
+            flex-direction: column-reverse; /* 下から上へ積み上げる */
             align-items: center;
-            gap: 4px;
+            gap: 2px;
             padding: 10px 0;
             scroll-behavior: smooth;
         }
@@ -83,23 +83,28 @@
             gap: 10px;
             background-color: #22222a;
             border: 1px solid #3f3f4f;
-            padding: 8px 16px;
+            padding: 6px 14px;
             border-radius: 20px;
             width: 80%;
-            max-width: 320px;
+            max-width: 300px;
+            height: 28px;
+            box-sizing: border-box;
             transition: all 0.2s ease;
         }
 
         .floor-dot {
-            width: 10px;
-            height: 10px;
+            width: 8px;
+            height: 8px;
             border-radius: 50%;
             background-color: #555566;
         }
 
         .floor-label {
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             color: #a0a0ab;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         /* 状態ごとのスタイル */
@@ -131,9 +136,18 @@
             background-color: #f44336;
         }
 
+        .floor-empty {
+            opacity: 0.3;
+            border-style: dashed;
+        }
+
         .floor-connector {
             width: 2px;
-            height: 15px;
+            height: 12px;
+            background-color: #3f3f4f;
+        }
+
+        .connector-active {
             background-color: #4caf50;
         }
 
@@ -184,11 +198,6 @@
             border-color: #ffc107;
         }
 
-        .restart-container {
-            margin-top: 15px;
-            text-align: center;
-        }
-
         .btn-small-reset {
             background: none;
             border: 1px solid #3f3f4f;
@@ -215,7 +224,6 @@
 <div class="game-container">
     <div class="header">
         <h1 class="title">⚔️ DUNGEON ESCAPE</h1>
-        <!-- 右上の現在地バッジを廃止し、「最初からやり直す」ボタンを配置 -->
         <div id="status-badge" class="badge"></div>
     </div>
     
