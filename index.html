@@ -43,59 +43,98 @@
             margin: 0;
         }
 
+        /* 右上の「最初からやり直す」ボタン配置エリア */
         .badge {
-            background-color: #2e2e38;
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            color: #a0a0ab;
+            background: none;
+            padding: 0;
+            border: none;
         }
 
-        /* 🗺️ ネットワークマップUIのスタイル */
+        /* 🗺️ 下から上へ積み上がる縦積み筒状マップUIのスタイル */
         .route-map-container {
             background-color: #16161a;
             border: 1px solid #2e2e38;
             border-radius: 8px;
-            padding: 10px;
+            padding: 12px;
             margin-bottom: 20px;
         }
 
         .route-map-title {
             font-size: 0.85rem;
             color: #a0a0ab;
-            margin-bottom: 5px;
+            margin-bottom: 8px;
             font-weight: bold;
         }
 
-        .route-svg-map {
-            width: 100%;
-            height: 150px;
-            display: block;
+        .route-scroll-wrapper {
+            max-height: 160px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column-reverse; /* 下から上へ積み上げる設定 */
+            align-items: center;
+            gap: 4px;
+            padding: 10px 0;
+            scroll-behavior: smooth;
         }
 
-        .map-edge-line {
-            stroke: #3f3f4f;
-            stroke-width: 1.5;
-            stroke-dasharray: 3,3;
+        .route-floor-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background-color: #22222a;
+            border: 1px solid #3f3f4f;
+            padding: 8px 16px;
+            border-radius: 20px;
+            width: 80%;
+            max-width: 320px;
+            transition: all 0.2s ease;
         }
 
-        .map-node-passed {
-            fill: #707080;
-            stroke: #16161a;
-            stroke-width: 1.5;
+        .floor-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: #555566;
         }
 
-        .map-node-current {
-            fill: #2196f3;
-            stroke: #ffffff;
-            stroke-width: 2;
-            filter: drop-shadow(0 0 4px #2196f3);
+        .floor-label {
+            font-size: 0.9rem;
+            color: #a0a0ab;
         }
 
-        .map-node-dead {
-            fill: #f44336;
-            stroke: #16161a;
-            stroke-width: 1.5;
+        /* 状態ごとのスタイル */
+        .floor-passed {
+            border-color: #4caf50;
+            color: #ffffff;
+        }
+        .floor-passed .floor-dot {
+            background-color: #4caf50;
+        }
+
+        .floor-current {
+            background-color: #1a2736;
+            border-color: #2196f3;
+            color: #ffffff;
+            box-shadow: 0 0 10px rgba(33, 150, 243, 0.4);
+            font-weight: bold;
+        }
+        .floor-current .floor-dot {
+            background-color: #2196f3;
+            box-shadow: 0 0 6px #2196f3;
+        }
+
+        .floor-dead {
+            background-color: #361a1a;
+            border-color: #f44336;
+        }
+        .floor-dead .floor-dot {
+            background-color: #f44336;
+        }
+
+        .floor-connector {
+            width: 2px;
+            height: 15px;
+            background-color: #4caf50;
         }
 
         /* テキストエリア */
@@ -152,112 +191,20 @@
 
         .btn-small-reset {
             background: none;
-            border: none;
-            color: #707080;
+            border: 1px solid #3f3f4f;
+            color: #a0a0ab;
             font-size: 0.8rem;
-            text-decoration: underline;
+            border-radius: 4px;
             cursor: pointer;
-            padding: 5px 10px;
+            padding: 6px 12px;
+            transition: all 0.2s ease;
         }
 
         .btn-small-reset:hover {
+            background-color: #2a2a35;
             color: #f44336;
+            border-color: #f44336;
         }
-
-        /* 🗺️ 縦積み筒状マップUIのスタイル */
-.route-map-container {
-    background-color: #16161a;
-    border: 1px solid #2e2e38;
-    border-radius: 8px;
-    padding: 12px;
-    margin-bottom: 20px;
-}
-
-.route-map-title {
-    font-size: 0.85rem;
-    color: #a0a0ab;
-    margin-bottom: 8px;
-    font-weight: bold;
-}
-
-.route-scroll-wrapper {
-    max-height: 140px;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-    padding: 10px 0;
-    scroll-behavior: smooth;
-}
-
-.route-floor-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    background-color: #22222a;
-    border: 1px solid #3f3f4f;
-    padding: 8px 16px;
-    border-radius: 20px;
-    width: 80%;
-    max-width: 320px;
-    transition: all 0.2s ease;
-}
-
-.floor-dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background-color: #555566;
-}
-
-.floor-label {
-    font-size: 0.9rem;
-    color: #a0a0ab;
-}
-
-/* 状態ごとのスタイル */
-.floor-passed {
-    border-color: #4caf50;
-    color: #ffffff;
-}
-.floor-passed .floor-dot {
-    background-color: #4caf50;
-}
-
-.floor-current {
-    background-color: #1a2736;
-    border-color: #2196f3;
-    color: #ffffff;
-    box-shadow: 0 0 10px rgba(33, 150, 243, 0.4);
-    font-weight: bold;
-}
-.floor-current .floor-dot {
-    background-color: #2196f3;
-    box-shadow: 0 0 6px #2196f3;
-}
-
-.floor-dead {
-    background-color: #361a1a;
-    border-color: #f44336;
-}
-.floor-dead .floor-dot {
-    background-color: #f44336;
-}
-
-.floor-unvisited {
-    opacity: 0.5;
-}
-
-.floor-connector {
-    width: 2px;
-    height: 15px;
-    background-color: #3f3f4f;
-}
-
-.connector-active {
-    background-color: #4caf50;
-}
         
         .success-text { color: #4caf50; font-weight: bold; }
         .danger-text { color: #f44336; font-weight: bold; }
@@ -268,7 +215,8 @@
 <div class="game-container">
     <div class="header">
         <h1 class="title">⚔️ DUNGEON ESCAPE</h1>
-        <div id="status-badge" class="badge">探索中</div>
+        <!-- 右上の現在地バッジを廃止し、「最初からやり直す」ボタンを配置 -->
+        <div id="status-badge" class="badge"></div>
     </div>
     
     <div id="text-display" class="text-area"></div>
