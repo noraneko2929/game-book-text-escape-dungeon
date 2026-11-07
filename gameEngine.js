@@ -1,6 +1,6 @@
 /**
  * gameEngine.js
- * ゲームの描画・状態管理ライブラリ（ランク別セーブ・完全修復版）
+ * ゲームの描画・状態管理ライブラリ（ランク別セーブ・リトライ対応版）
  */
 class EscapeGameEngine {
     constructor(storyData, config = {}) {
@@ -9,19 +9,20 @@ class EscapeGameEngine {
         this.choiceDisplayId = config.choiceDisplayId || 'choice-display';
         this.statusBadgeId = config.statusBadgeId || 'status-badge';
         this.startSceneKey = config.startSceneKey || 'start';
-        this.saveKey = config.saveKey + '_v9';
-        this.historyKey = config.saveKey + '_history_v9';
-        this.revealedKey = config.saveKey + '_revealed_v9';
-        this.reachedF10Key = config.saveKey + '_reached_f10_v9';
+        this.saveKey = (config.saveKey || 'escape_game') + '_save_rank';
+        this.historyKey = (config.saveKey || 'escape_game') + '_history_v10';
+        this.checkpointKey = (config.saveKey || 'escape_game') + '_checkpoint_v10';
     }
 
     init() {
-        const savedScene = localStorage.getItem(this.saveKey);
-        const targetScene = (savedScene && this.storyData[savedScene]) ? savedScene : this.startSceneKey;
-        
         this.routeHistory = JSON.parse(localStorage.getItem(this.historyKey) || '[]');
-        this.hasReachedF15 = localStorage.getItem(this.revealedKey) === 'true';
-        this.hasReachedF10Flag = localStorage.getItem(this.reachedF10Key) === 'true';
+        
+        // ランクごとのセーブポイント（未設定なら 'start'）
+        this.currentCheckpoint = localStorage.getItem(this.checkpointKey) || this.startSceneKey;
+        
+        // 起動時は保存されているチェックポイント、または前回のセーブシーンから再開
+        const savedScene = localStorage.getItem(this.saveKey);
+        const targetScene = (savedScene && this.storyData[savedScene]) ? savedScene : this.currentCheckpoint;
 
         this.renderScene(targetScene);
     }
@@ -32,7 +33,7 @@ class EscapeGameEngine {
         const match = sceneKey.match(/^f(\d+)/);
         if (match) {
             const floorNum = parseInt(match[1], 10);
-            if (floorNum <= 15) {
+            if (floorNum <= 20) {
                 return { id: `f${floorNum}`, name: `第${floorNum}階層` };
             }
         }
@@ -41,45 +42,33 @@ class EscapeGameEngine {
         return { id: sceneKey, name: displayName };
     }
 
-    // シーンキーから現在のランクを厳密に判定
+    // シーンキーから階層ランクを判定
     getSceneRank(sceneKey) {
-        // 上層：f10〜f1、および escape
-        if (sceneKey.startsWith('f10') || sceneKey.startsWith('f9') || sceneKey.startsWith('f8') || 
-            sceneKey.startsWith('f7') || sceneKey.startsWith('f6') || sceneKey.startsWith('f5') || 
-            sceneKey.startsWith('f4') || sceneKey.startsWith('f3') || sceneKey.startsWith('f2') || 
-            sceneKey.startsWith('f1') || sceneKey.startsWith('escape')) {
-            return 'upper';
-        }
+        if (sceneKey.startsWith('escape')) return 'upper';
+        const match = sceneKey.match(/^f(\d+)/);
+        if (!match) return 'deep';
         
-        // 中層：f15〜f11
-        if (sceneKey.startsWith('f15') || sceneKey.startsWith('f14') || sceneKey.startsWith('f13') || 
-            sceneKey.startsWith('f12') || sceneKey.startsWith('f11')) {
-            return 'mid';
-        }
-
-        // 深層：それ以外
-        return 'deep';
+        const floor = parseInt(match[1], 10);
+        if (floor <= 10) return 'upper'; // 上層 (1〜10)
+        if (floor <= 15) return 'mid';   // 中層 (11〜15)
+        return 'deep';                   // 下層 (16〜20)
     }
 
-    // 到達マイルストーンの更新と保存
-    checkReachedMilestones(sceneKey) {
-        const match = sceneKey.match(/^f(\d+)/);
-        if (match) {
-            const floorNum = parseInt(match[1], 10);
-            if (floorNum <= 15) {
-                this.hasReachedF15 = true;
-                localStorage.setItem(this.revealedKey, 'true');
-            }
-            if (floorNum <= 10) {
-                this.hasReachedF10Flag = true;
-                localStorage.setItem(this.reachedF10Key, 'true');
-            }
+    // 階層ランクが上がったタイミングでチェックポイントを更新・セーブする
+    updateCheckpoint(sceneKey) {
+        const rank = this.getSceneRank(sceneKey);
+        let newCheckpoint = null;
+
+        // 各ランクの最初の到達地点をチェックポイントとする
+        if (rank === 'upper' && sceneKey === 'f10_p1') {
+            newCheckpoint = 'f10_p1';
+        } else if (rank === 'mid' && sceneKey === 'f15_p1') {
+            newCheckpoint = 'f15_p1';
         }
-        if (sceneKey === 'escape_true') {
-            this.hasReachedF15 = true;
-            this.hasReachedF10Flag = true;
-            localStorage.setItem(this.revealedKey, 'true');
-            localStorage.setItem(this.reachedF10Key, 'true');
+
+        if (newCheckpoint) {
+            this.currentCheckpoint = newCheckpoint;
+            localStorage.setItem(this.checkpointKey, this.currentCheckpoint);
         }
     }
 
@@ -104,18 +93,15 @@ class EscapeGameEngine {
             return;
         }
 
-        this.checkReachedMilestones(sceneKey);
+        this.updateCheckpoint(sceneKey);
 
         const nodeItem = this.getMapNodeItem(sceneKey, scene);
         const isGameOver = !scene.choices || scene.choices.length === 0;
-        const currentRank = this.getSceneRank(sceneKey);
 
-        // ゲームオーバーでなければ現在のシーンをセーブ
+        // ゲームオーバーでなければ現在の進行状況をセーブ
         if (!isGameOver) {
             localStorage.setItem(this.saveKey, sceneKey);
-        }
-
-        if (!isGameOver) {
+            
             const lastItem = this.routeHistory[this.routeHistory.length - 1];
             if (!lastItem || lastItem.id !== nodeItem.id) {
                 this.routeHistory.push(nodeItem);
@@ -133,14 +119,12 @@ class EscapeGameEngine {
             headerResetBtn.className = 'btn-small-reset';
             headerResetBtn.innerText = '最初からやり直す';
             headerResetBtn.onclick = () => {
-                if (confirm('最初からやり直しますか？（セーブデータとルート記録が削除されます）')) {
+                if (confirm('最初からやり直しますか？（セーブデータと記録が削除されます）')) {
                     localStorage.removeItem(this.saveKey);
                     localStorage.removeItem(this.historyKey);
-                    localStorage.removeItem(this.revealedKey);
-                    localStorage.removeItem(this.reachedF10Key);
+                    localStorage.removeItem(this.checkpointKey);
                     this.routeHistory = [];
-                    this.hasReachedF15 = false;
-                    this.hasReachedF10Flag = false;
+                    this.currentCheckpoint = this.startSceneKey;
                     this.renderScene(this.startSceneKey);
                 }
             };
@@ -165,27 +149,12 @@ class EscapeGameEngine {
                 choiceDisplay.appendChild(button);
             });
         } else if (!isEnding) {
-            // 【ご指定の厳密なリトライルール】
-            // 1. 上層（10〜1階層）でゲームオーバーした場合：
-            //    - 10層に到達していれば上層の初め（f10_p1）から
-            //    - 10層に到達していなければ中層の初め（f15_p1）から
-            // 2. 中層（15〜11階層）でゲームオーバーした場合：
-            //    - 15層に到達していれば中層の初め（f15_p1）から
-            //    - 15層に到達していなければ深層の初め（start）から
-            // 3. 深層でゲームオーバーした場合：深層の初め（start）から
-            let retryTarget = 'start';
-
-            if (currentRank === 'upper') {
-                retryTarget = this.hasReachedF10Flag ? 'f10_p1' : 'f15_p1';
-            } else if (currentRank === 'mid') {
-                retryTarget = this.hasReachedF15 ? 'f15_p1' : 'start';
-            } else {
-                retryTarget = 'start';
-            }
+            // ゲームオーバー時は、到達した階層ランクのセーブポイント（チェックポイント）からリトライ
+            const retryTarget = this.currentCheckpoint;
 
             const checkpointBtn = document.createElement('button');
             checkpointBtn.className = 'btn btn-retry';
-            checkpointBtn.innerText = 'ランク規定位置からやり直す';
+            checkpointBtn.innerText = 'セーブした階層からリトライする';
             checkpointBtn.onclick = () => {
                 this.syncHistoryUpTo(retryTarget);
                 this.renderScene(retryTarget);
@@ -226,7 +195,7 @@ class EscapeGameEngine {
         let displayList = [...this.routeHistory];
         if (displayList.length === 0) {
             const currentScene = this.storyData[currentNodeId] || {};
-            displayList = [{ id: currentNodeId, name: currentScene.status || '未知の最深部（落下直後）' }];
+            displayList = [{ id: currentNodeId, name: currentScene.status || '未知の最深部' }];
         }
 
         let activeElement = null;
@@ -248,6 +217,7 @@ class EscapeGameEngine {
                 activeElement = floorItem;
             }
 
+            // コネクターを必ずフロアアイテムの間に挟んで生成する
             if (index < displayList.length - 1) {
                 const connector = document.createElement('div');
                 connector.className = 'floor-connector connector-active';
