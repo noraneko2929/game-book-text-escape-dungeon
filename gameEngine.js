@@ -1,6 +1,6 @@
 /**
  * gameEngine.js
- * ゲームの描画・状態管理ライブラリ（3スロット固定・オートスクロール最上部固定対応版）
+ * ゲームの描画・状態管理ライブラリ（15層到達前匿名化・3スロット固定版）
  */
 class EscapeGameEngine {
     constructor(storyData, config = {}) {
@@ -10,13 +10,15 @@ class EscapeGameEngine {
         this.statusBadgeId = config.statusBadgeId || 'status-badge';
         this.startSceneKey = config.startSceneKey || 'start';
         this.saveKey = (config.saveKey || 'escape_game') + '_save_rank';
-        this.historyKey = (config.saveKey || 'escape_game') + '_history_v12';
-        this.checkpointKey = (config.saveKey || 'escape_game') + '_checkpoint_v12';
+        this.historyKey = (config.saveKey || 'escape_game') + '_history_v13';
+        this.checkpointKey = (config.saveKey || 'escape_game') + '_checkpoint_v13';
+        this.revealedKey = (config.saveKey || 'escape_game') + '_revealed_v13';
     }
 
     init() {
         this.routeHistory = JSON.parse(localStorage.getItem(this.historyKey) || '[]');
         this.currentCheckpoint = localStorage.getItem(this.checkpointKey) || this.startSceneKey;
+        this.hasReachedF15 = localStorage.getItem(this.revealedKey) === 'true';
         
         const savedScene = localStorage.getItem(this.saveKey);
         const targetScene = (savedScene && this.storyData[savedScene]) ? savedScene : this.currentCheckpoint;
@@ -31,11 +33,19 @@ class EscapeGameEngine {
         if (match) {
             const floorNum = parseInt(match[1], 10);
             if (floorNum <= 20) {
+                // 15階層（f15）に到達していない場合、16〜20階層は「第??階層」として扱う
+                if (floorNum >= 16 && !this.hasReachedF15) {
+                    return { id: `f${floorNum}`, name: '第??階層' };
+                }
                 return { id: `f${floorNum}`, name: `第${floorNum}階層` };
             }
         }
 
         let displayName = (scene && scene.status) ? scene.status : sceneKey;
+        // 15階層到達前は、ステータス内の階層表現も隠す
+        if (!this.hasReachedF15 && (displayName.includes('第20') || displayName.includes('第19') || displayName.includes('第18') || displayName.includes('第17') || displayName.includes('第16'))) {
+            displayName = '未知の最深部（現在地不明）';
+        }
         return { id: sceneKey, name: displayName };
     }
 
@@ -51,6 +61,16 @@ class EscapeGameEngine {
     }
 
     updateCheckpoint(sceneKey) {
+        // f15_p1 に到達した瞬間、15層到達フラグをtrueにして永続化
+        const match = sceneKey.match(/^f(\d+)/);
+        if (match) {
+            const floorNum = parseInt(match[1], 10);
+            if (floorNum <= 15) {
+                this.hasReachedF15 = true;
+                localStorage.setItem(this.revealedKey, 'true');
+            }
+        }
+
         const rank = this.getSceneRank(sceneKey);
         let newCheckpoint = null;
 
@@ -116,8 +136,10 @@ class EscapeGameEngine {
                     localStorage.removeItem(this.saveKey);
                     localStorage.removeItem(this.historyKey);
                     localStorage.removeItem(this.checkpointKey);
+                    localStorage.removeItem(this.revealedKey);
                     this.routeHistory = [];
                     this.currentCheckpoint = this.startSceneKey;
+                    this.hasReachedF15 = false;
                     this.renderScene(this.startSceneKey);
                 }
             };
@@ -207,17 +229,20 @@ class EscapeGameEngine {
             });
         }
 
-        // 2. 現在地から過去へ向かう順序に調整して追加
+        // 2. 現在地から過去へ向かう順序に調整して追加（名前は都度 `getMapNodeItem` で判定して15層到達前の匿名化を反映）
         const reversedHistory = [...displayList].reverse();
         reversedHistory.forEach((item, index) => {
+            const sceneObj = this.storyData[item.id] || {};
+            const resolvedNode = this.getMapNodeItem(item.id, sceneObj);
+
             const isCurrent = (item.id === currentNodeId || index === 0);
             let stateClass = isCurrent ? 'floor-current' : 'floor-passed';
             if (isCurrent && isGameOver) stateClass = 'floor-dead';
 
             itemsToRender.push({
                 type: 'floor',
-                id: item.id,
-                name: `${item.name}${isCurrent ? '（現在地）' : ''}`,
+                id: resolvedNode.id,
+                name: `${resolvedNode.name}${isCurrent ? '（現在地）' : ''}`,
                 className: stateClass
             });
         });
@@ -242,7 +267,6 @@ class EscapeGameEngine {
 
         routeMapContainer.appendChild(scrollLayer);
 
-        // シーン切り替え時はスクロール位置を常に最上部へ強制移動
         setTimeout(() => {
             scrollLayer.scrollTop = 0;
         }, 10);
