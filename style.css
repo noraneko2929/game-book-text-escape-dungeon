@@ -1,4 +1,4 @@
-
+@charset "UTF-8";
 
 body {
     font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
@@ -77,7 +77,6 @@ body {
     box-sizing: border-box;
     -ms-overflow-style: none;
     scrollbar-width: none;
-    scroll-behavior: smooth;
     position: relative;
 }
 
@@ -150,6 +149,7 @@ body {
     background-color: #444455;
 }
 
+/* ゲームオーバー時のスタイル（赤系） */
 .floor-dead {
     background-color: #361a1a;
     border-color: #f44336;
@@ -159,7 +159,20 @@ body {
     background-color: #f44336;
 }
 
-/* コネクターを確実に中央揃えにするための修正 */
+/* クリア（生還）時のスタイル（ゴールド・金色系） */
+.floor-clear {
+    background-color: #332d1a;
+    border-color: #ffc107;
+    color: #ffffff;
+    box-shadow: 0 0 12px rgba(255, 193, 7, 0.4);
+    font-weight: bold;
+}
+
+.floor-clear .floor-dot {
+    background-color: #ffc107;
+    box-shadow: 0 0 6px #ffc107;
+}
+
 .floor-connector {
     width: 2px;
     height: 14px;
