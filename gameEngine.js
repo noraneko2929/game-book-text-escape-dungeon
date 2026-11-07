@@ -1,6 +1,6 @@
 /**
  * gameEngine.js
- * ゲームの描画・状態管理ライブラリ（ネットワークマップUI対応版）
+ * ゲームの描画・状態管理ライブラリ（階層単位・縦スクロールマップ対応版）
  */
 class EscapeGameEngine {
     constructor(storyData, config = {}) {
@@ -10,9 +10,8 @@ class EscapeGameEngine {
         this.statusBadgeId = config.statusBadgeId || 'status-badge';
         this.startSceneKey = config.startSceneKey || 'start';
         this.saveKey = config.saveKey || 'escape_game_current_scene';
-        this.checkpointKey = config.saveKey + '_checkpoint';
-        this.historyKey = config.saveKey + '_route_history';
-        this.edgesKey = config.saveKey + '_route_edges';
+        this.checkpointKey = config.saveKey + '_floor_checkpoint';
+        this.historyKey = config.saveKey + '_floor_history';
         this.revealedKey = config.saveKey + '_revealed_floors';
     }
 
@@ -20,26 +19,50 @@ class EscapeGameEngine {
         const savedScene = localStorage.getItem(this.saveKey);
         const targetScene = (savedScene && this.storyData[savedScene]) ? savedScene : this.startSceneKey;
         
-        this.routeHistory = JSON.parse(localStorage.getItem(this.historyKey) || '[]');
-        this.routeEdges = JSON.parse(localStorage.getItem(this.edgesKey) || '[]');
+        this.floorHistory = JSON.parse(localStorage.getItem(this.historyKey) || '[]');
         this.hasReachedF15 = localStorage.getItem(this.revealedKey) === 'true';
 
         this.renderScene(targetScene);
     }
 
-    isFloorStart(sceneKey) {
-        if (sceneKey === 'start') return true;
-        if (sceneKey.endsWith('_p1')) return true;
-        return false;
+    // シーンから所属する「大階層（フロア）」を特定する（例: f20, f15, f10, start など）
+    getFloorId(sceneKey) {
+        if (sceneKey.startsWith('start') || sceneKey.startsWith('gameover_f21')) return 'deep_start';
+        if (sceneKey.startsWith('f20') || sceneKey.startsWith('f19') || sceneKey.startsWith('f18') || 
+            sceneKey.startsWith('f17') || sceneKey.startsWith('f16')) return 'deep_area';
+        if (sceneKey.startsWith('f15') || sceneKey.startsWith('f14') || sceneKey.startsWith('f13') || 
+            sceneKey.startsWith('f12') || sceneKey.startsWith('f11')) return 'mid_area';
+        if (sceneKey.startsWith('f10') || sceneKey.startsWith('f9') || sceneKey.startsWith('f8') || 
+            sceneKey.startsWith('f7') || sceneKey.startsWith('f6') || sceneKey.startsWith('f5') || 
+            sceneKey.startsWith('f4') || sceneKey.startsWith('f3') || sceneKey.startsWith('f2') || 
+            sceneKey.startsWith('f1') || sceneKey.startsWith('escape')) return 'upper_area';
+        return sceneKey;
+    }
+
+    // 各大階層の最初のシーン（チェックポイント）を返す
+    getFloorCheckpoint(floorId) {
+        switch(floorId) {
+            case 'deep_start': return 'start';
+            case 'deep_area': return 'f20_p1';
+            case 'mid_area': return 'f15_p1';
+            case 'upper_area': return 'f10_p1';
+            default: return 'start';
+        }
+    }
+
+    // 階層の代表名称
+    getFloorName(floorId) {
+        switch(floorId) {
+            case 'deep_start': return '未知の最深部（落下地点）';
+            case 'deep_area': return '深層（未踏域・悪魔回廊）';
+            case 'mid_area': return '中層（第15階層〜第11階層）';
+            case 'upper_area': return '上層・地上（第10階層〜）';
+            default: return '探索エリア';
+        }
     }
 
     checkF15Reached(sceneKey) {
-        if (sceneKey.startsWith('f15') || sceneKey.startsWith('f14') || sceneKey.startsWith('f13') || 
-            sceneKey.startsWith('f12') || sceneKey.startsWith('f11') || sceneKey.startsWith('f10') || 
-            sceneKey.startsWith('f9') || sceneKey.startsWith('f8') || sceneKey.startsWith('f7') || 
-            sceneKey.startsWith('f6') || sceneKey.startsWith('f5') || sceneKey.startsWith('f4') || 
-            sceneKey.startsWith('f3') || sceneKey.startsWith('f2') || sceneKey.startsWith('f1') || 
-            sceneKey === 'escape_true') {
+        if (sceneKey.startsWith('f15') || sceneKey.startsWith('escape_true')) {
             this.hasReachedF15 = true;
             localStorage.setItem(this.revealedKey, 'true');
         }
@@ -54,27 +77,20 @@ class EscapeGameEngine {
 
         this.checkF15Reached(sceneKey);
 
-        // 履歴と接続エッジ（線）の記録
-        if (this.routeHistory.length === 0) {
-            this.routeHistory.push(sceneKey);
-        } else {
-            const prevSceneKey = this.routeHistory[this.routeHistory.length - 1];
-            if (prevSceneKey !== sceneKey) {
-                this.routeHistory.push(sceneKey);
-                // どのノードからどのノードへ移動したかをエッジとして記録
-                const edgeKey = `${prevSceneKey}-->${sceneKey}`;
-                if (!this.routeEdges.includes(edgeKey)) {
-                    this.routeEdges.push(edgeKey);
-                }
-            }
+        const currentFloorId = this.getFloorId(sceneKey);
+        const isGameOver = !scene.choices || scene.choices.length === 0;
+
+        // 階層単位で履歴を記録（同じ階層内の細かい選択は追加せず、階層が変わったときのみ積む）
+        if (!isGameOver && !this.floorHistory.includes(currentFloorId)) {
+            this.floorHistory.push(currentFloorId);
+            localStorage.setItem(this.historyKey, JSON.stringify(this.floorHistory));
         }
 
-        localStorage.setItem(this.historyKey, JSON.stringify(this.routeHistory));
-        localStorage.setItem(this.edgesKey, JSON.stringify(this.routeEdges));
         localStorage.setItem(this.saveKey, sceneKey);
 
-        if (this.isFloorStart(sceneKey)) {
-            localStorage.setItem(this.checkpointKey, sceneKey);
+        // 階層が変わったらチェックポイントを更新
+        if (!isGameOver) {
+            localStorage.setItem(this.checkpointKey, currentFloorId);
         }
 
         const textDisplay = document.getElementById(this.textDisplayId);
@@ -102,8 +118,9 @@ class EscapeGameEngine {
                 choiceDisplay.appendChild(button);
             });
         } else if (!isEnding) {
-            const floorCheckpoint = localStorage.getItem(this.checkpointKey);
-            const retryTarget = (floorCheckpoint && this.storyData[floorCheckpoint]) ? floorCheckpoint : this.startSceneKey;
+            // 【ゲームオーバー時】所属階層の最初へ戻るリトライボタン
+            const savedFloor = localStorage.getItem(this.checkpointKey) || 'deep_start';
+            const retryTarget = this.getFloorCheckpoint(savedFloor);
 
             const checkpointBtn = document.createElement('button');
             checkpointBtn.className = 'btn btn-retry';
@@ -121,8 +138,8 @@ class EscapeGameEngine {
             choiceDisplay.appendChild(endingMsg);
         }
 
-        // ネットワークマップの描画
-        this.renderRouteMap(sceneKey);
+        // 縦の筒状・階層マップの描画
+        this.renderRouteMap(currentFloorId, isGameOver);
 
         const restartContainer = document.createElement('div');
         restartContainer.className = 'restart-container';
@@ -135,10 +152,8 @@ class EscapeGameEngine {
                 localStorage.removeItem(this.saveKey);
                 localStorage.removeItem(this.checkpointKey);
                 localStorage.removeItem(this.historyKey);
-                localStorage.removeItem(this.edgesKey);
                 localStorage.removeItem(this.revealedKey);
-                this.routeHistory = [];
-                this.routeEdges = [];
+                this.floorHistory = [];
                 this.hasReachedF15 = false;
                 this.renderScene(this.startSceneKey);
             }
@@ -148,8 +163,8 @@ class EscapeGameEngine {
         choiceDisplay.appendChild(restartContainer);
     }
 
-    // スクショのようなネットワーク・ツリーマップを描画する関数
-    renderRouteMap(currentSceneKey) {
+    // 縦の筒状UIで層が積み重なるマップを描画する関数
+    renderRouteMap(currentFloorId, isGameOver) {
         let routeMapContainer = document.getElementById('route-map-container');
         if (!routeMapContainer) {
             routeMapContainer = document.createElement('div');
@@ -163,84 +178,70 @@ class EscapeGameEngine {
 
         const mapTitle = document.createElement('div');
         mapTitle.className = 'route-map-title';
-        mapTitle.innerText = '🗺️ 探索ルートマップ';
+        mapTitle.innerText = '🗺️ 探索階層ルート（縦積みマップ）';
         routeMapContainer.appendChild(mapTitle);
 
-        // ネットワークビューポート（SVGまたはカスタムノードエリア）
-        const svgContainer = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-        svgContainer.setAttribute('class', 'route-svg-map');
-        svgContainer.setAttribute('viewBox', '0 0 550 180');
+        // 縦スクロール可能なコンテナ
+        const scrollWrapper = document.createElement('div');
+        scrollWrapper.className = 'route-scroll-wrapper';
 
-        // 通過したユニークなノードリスト
-        const visitedSet = new Set(this.routeHistory);
-        const nodesArray = Array.from(visitedSet);
+        // 全体の階層定義（下から上へ積み上がる）
+        const allFloors = [
+            { id: 'deep_start', name: '未知の最深部（落下直後）' },
+            { id: 'deep_area', name: '深層・未踏エリア' },
+            { id: 'mid_area', name: '中層（第15〜11階層）' },
+            { id: 'upper_area', name: '上層・地上エリア' }
+        ];
 
-        // 簡易レイアウト座標計算（X軸に沿って配置、分岐は上下にオフセット）
-        const nodePositions = {};
-        const totalNodes = nodesArray.length;
-        const spacingX = Math.max(40, 500 / (totalNodes || 1));
+        let activeElement = null;
 
-        nodesArray.forEach((key, index) => {
-            let x = 40 + index * spacingX;
-            let y = 90;
-            // 分岐や死亡ノードの上下位置調整
-            if (key.includes('gameover')) {
-                y = index % 2 === 0 ? 140 : 40;
-            } else if (index % 2 !== 0) {
-                y = 60;
+        allFloors.forEach((floor, index) => {
+            const floorNode = document.createElement('div');
+            floorNode.className = 'route-floor-item';
+
+            const isPassed = this.floorHistory.includes(floor.id) || (this.hasReachedF15 && index <= 2);
+            const isCurrent = (floor.id === currentFloorId);
+
+            if (isCurrent) {
+                floorNode.classList.add('floor-current');
+                if (isGameOver) floorNode.classList.add('floor-dead');
+                activeElement = floorNode;
+            } else if (isPassed) {
+                floorNode.classList.add('floor-passed');
             } else {
-                y = 120;
+                floorNode.classList.add('floor-unvisited');
             }
-            nodePositions[key] = { x, y };
-        });
 
-        // 1. エッジ（線）の描画
-        this.routeEdges.forEach(edge => {
-            const [from, to] = edge.split('-->');
-            if (nodePositions[from] && nodePositions[to]) {
-                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-                line.setAttribute('x1', nodePositions[from].x);
-                line.setAttribute('y1', nodePositions[from].y);
-                line.setAttribute('x2', nodePositions[to].x);
-                line.setAttribute('y2', nodePositions[to].y);
-                line.setAttribute('class', 'map-edge-line');
-                svgContainer.appendChild(line);
+            // 表示名（15階層到達前は深層を秘匿）
+            let displayName = floor.name;
+            if (!this.hasReachedF15 && (floor.id === 'deep_area' || floor.id === 'deep_start') && !isPassed) {
+                displayName = '???（未踏の深淵）';
+            }
+
+            floorNode.innerHTML = `
+                <div class="floor-dot"></div>
+                <div class="floor-label">${displayName} ${isCurrent ? '（現在地）' : ''}</div>
+            `;
+
+            scrollWrapper.appendChild(floorNode);
+
+            // 層を繋ぐ縦線
+            if (index < allFloors.length - 1) {
+                const connector = document.createElement('div');
+                connector.className = 'floor-connector';
+                if (isPassed) connector.classList.add('connector-active');
+                scrollWrapper.appendChild(connector);
             }
         });
 
-        // 2. ノード（点）の描画
-        nodesArray.forEach(key => {
-            const pos = nodePositions[key];
-            const scene = this.storyData[key];
-            if (!scene) return;
+        routeMapContainer.appendChild(scrollWrapper);
 
-            const isCurrent = (key === currentSceneKey);
-            const isGameOver = !scene.choices || scene.choices.length === 0;
-
-            const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-            g.setAttribute('class', 'map-node-group');
-
-            const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-            circle.setAttribute('cx', pos.x);
-            circle.setAttribute('cy', pos.y);
-            circle.setAttribute('r', isCurrent ? '8' : '5');
-            
-            let circleClass = 'map-node-passed';
-            if (isCurrent) circleClass = 'map-node-current';
-            else if (isGameOver && !key.includes('escape')) circleClass = 'map-node-dead';
-            circle.setAttribute('class', circleClass);
-
-            // ツールチップ（ラベル）
-            const title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
-            let labelText = this.hasReachedF15 || !key.startsWith('f') ? (scene.status || key) : '???';
-            title.textContent = labelText;
-
-            circle.appendChild(title);
-            g.appendChild(circle);
-            svgContainer.appendChild(g);
-        });
-
-        routeMapContainer.appendChild(svgContainer);
+        // 常に現在位置が中央に見えるようにスクロール位置を自動調整
+        setTimeout(() => {
+            if (activeElement) {
+                scrollWrapper.scrollTop = activeElement.offsetTop - scrollWrapper.clientHeight / 2 + activeElement.clientHeight / 2;
+            }
+        }, 50);
     }
 }
 
