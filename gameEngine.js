@@ -1,6 +1,6 @@
 /**
  * gameEngine.js
- * ゲームの描画・状態管理ライブラリ
+ * ゲームの描画・状態管理ライブラリ（構文完全クリーン版）
  */
 class EscapeGameEngine {
     constructor(storyData, config = {}) {
@@ -10,9 +10,9 @@ class EscapeGameEngine {
         this.statusBadgeId = config.statusBadgeId || 'status-badge';
         this.startSceneKey = config.startSceneKey || 'start';
         this.saveKey = (config.saveKey || 'escape_game') + '_save_rank';
-        this.historyKey = (config.saveKey || 'escape_game') + '_history_v22';
-        this.checkpointKey = (config.saveKey || 'escape_game') + '_checkpoint_v22';
-        this.revealedKey = (config.saveKey || 'escape_game') + '_revealed_v22';
+        this.historyKey = (config.saveKey || 'escape_game') + '_history_v23';
+        this.checkpointKey = (config.saveKey || 'escape_game') + '_checkpoint_v23';
+        this.revealedKey = (config.saveKey || 'escape_game') + '_revealed_v23';
         this.isAnimating = false;
     }
 
@@ -229,7 +229,6 @@ class EscapeGameEngine {
 
         const itemsToRender = [];
 
-        // 1. 【上】未到達階層（？？？）
         if (!isGameOver && !isEnding) {
             itemsToRender.push({
                 type: 'floor',
@@ -239,7 +238,6 @@ class EscapeGameEngine {
             });
         }
 
-        // 2. 【中】現在地
         const currentItem = displayList[displayList.length - 1] || { id: currentNodeId, name: '現在地' };
         const currentSceneObj = this.storyData[currentItem.id] || {};
         const resolvedCurrent = this.getMapNodeItem(currentItem.id, currentSceneObj);
@@ -259,7 +257,6 @@ class EscapeGameEngine {
             className: currentClass
         });
 
-        // 3. 【下】過去の履歴
         for (let i = displayList.length - 2; i >= 0; i--) {
             const histItem = displayList[i];
             const histSceneObj = this.storyData[histItem.id] || {};
@@ -273,7 +270,6 @@ class EscapeGameEngine {
             });
         }
 
-        // DOM構築
         itemsToRender.forEach((item, index) => {
             const floorItem = document.createElement('div');
             floorItem.className = `route-floor-item ${item.className}`;
@@ -314,4 +310,34 @@ class EscapeGameEngine {
                         const sceneObj = this.storyData[currentNodeId] || {};
                         const resolvedNode = this.getMapNodeItem(currentNodeId, sceneObj);
                         
-                        let finalClass = isGameOver ? 'route-floor-
+                        let finalClass = isGameOver ? 'route-floor-item floor-current floor-dead' : 'route-floor-item floor-current';
+                        targetItem.className = finalClass;
+                        targetItem.innerHTML = `
+                            <div class="floor-dot"></div>
+                            <div class="floor-label">${resolvedNode.name}（現在地）</div>
+                        `;
+
+                        const connectors = scrollLayer.querySelectorAll('.floor-connector');
+                        if (connectors.length > 0) {
+                            connectors[0].classList.add('connector-active');
+                        }
+                    }
+                    this.isAnimating = false;
+                }, 600);
+
+            }, 50);
+        } else {
+            scrollLayer.scrollTop = 0;
+            this.isAnimating = false;
+        }
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    if (typeof storyData !== 'undefined') {
+        const game = new EscapeGameEngine(storyData);
+        game.init();
+    } else {
+        console.error('storyData is not defined.');
+    }
+});
