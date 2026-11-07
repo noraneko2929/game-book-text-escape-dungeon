@@ -1,0 +1,224 @@
+body {
+    font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
+    background-color: #121214;
+    color: #e0e0e6;
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+
+.game-container {
+    width: 100%;
+    max-width: 600px;
+    background-color: #1e1e24;
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+    border: 1px solid #2e2e38;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid #2e2e38;
+    padding-bottom: 15px;
+    margin-bottom: 20px;
+}
+
+.title {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #4caf50;
+    margin: 0;
+}
+
+.badge {
+    background: none;
+    padding: 0;
+    border: none;
+}
+
+/* 🗺️ マップUIレイヤー全体のスタイル */
+.route-map-container {
+    background-color: #16161a;
+    border: 1px solid #2e2e38;
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 20px;
+    overflow: hidden;
+}
+
+.route-map-title {
+    font-size: 0.85rem;
+    color: #a0a0ab;
+    margin-bottom: 8px;
+    font-weight: bold;
+}
+
+/* 高さ130px：ちょうど3フロア＋コネクターが表示される高さ */
+.route-scroll-layer {
+    height: 130px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column-reverse;
+    align-items: center;
+    padding: 6px 0;
+    box-sizing: border-box;
+    scroll-behavior: smooth;
+}
+
+.route-floor-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background-color: #22222a;
+    border: 1px solid #3f3f4f;
+    padding: 6px 14px;
+    border-radius: 20px;
+    width: 80%;
+    max-width: 300px;
+    height: 28px;
+    box-sizing: border-box;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+}
+
+.floor-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #555566;
+    flex-shrink: 0;
+}
+
+.floor-label {
+    font-size: 0.85rem;
+    color: #a0a0ab;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* 過去に通過した階層 */
+.floor-passed {
+    border-color: #4caf50;
+    color: #ffffff;
+}
+.floor-passed .floor-dot {
+    background-color: #4caf50;
+}
+
+/* 現在地 */
+.floor-current {
+    background-color: #1a2736;
+    border-color: #2196f3;
+    color: #ffffff;
+    box-shadow: 0 0 10px rgba(33, 150, 243, 0.4);
+    font-weight: bold;
+}
+.floor-current .floor-dot {
+    background-color: #2196f3;
+    box-shadow: 0 0 6px #2196f3;
+}
+
+/* 次の未到達階層（？？？） */
+.floor-unknown {
+    background-color: #18181f;
+    border-color: #333340;
+    color: #666677;
+    opacity: 0.6;
+}
+.floor-unknown .floor-dot {
+    background-color: #444455;
+}
+
+/* 死亡時 */
+.floor-dead {
+    background-color: #361a1a;
+    border-color: #f44336;
+}
+.floor-dead .floor-dot {
+    background-color: #f44336;
+}
+
+.floor-connector {
+    width: 2px;
+    height: 14px;
+    background-color: #3f3f4f;
+    flex-shrink: 0;
+}
+
+.connector-active {
+    background-color: #4caf50;
+}
+
+/* テキストエリア */
+.text-area {
+    font-size: 1.05rem;
+    line-height: 1.7;
+    margin-bottom: 30px;
+    min-height: 120px;
+    white-space: pre-wrap;
+}
+
+.choice-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 25px;
+}
+
+.btn {
+    background-color: #2a2a35;
+    color: #ffffff;
+    border: 1px solid #3f3f4f;
+    padding: 14px 20px;
+    font-size: 1rem;
+    border-radius: 8px;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.2s ease;
+}
+
+.btn:hover {
+    background-color: #353545;
+    border-color: #4caf50;
+    transform: translateY(-1px);
+}
+
+.btn-retry {
+    background-color: #3a2a1e;
+    border-color: #5a402e;
+    color: #ffc107;
+    text-align: center;
+    font-weight: bold;
+}
+
+.btn-retry:hover {
+    background-color: #4a3828;
+    border-color: #ffc107;
+}
+
+.btn-small-reset {
+    background: none;
+    border: 1px solid #3f3f4f;
+    color: #a0a0ab;
+    font-size: 0.8rem;
+    border-radius: 4px;
+    cursor: pointer;
+    padding: 6px 12px;
+    transition: all 0.2s ease;
+}
+
+.btn-small-reset:hover {
+    background-color: #2a2a35;
+    color: #f44336;
+    border-color: #f44336;
+}
+
+.success-text { color: #4caf50; font-weight: bold; }
+.danger-text { color: #f44336; font-weight: bold; }
