@@ -8,16 +8,22 @@ body {
     justify-content: center;
     align-items: center;
     min-height: 100vh;
+    box-sizing: border-box;
 }
 
+/* 画面の大枠：選択肢3つ表示時のサイズに合わせて高さを固定 */
 .game-container {
     width: 100%;
     max-width: 600px;
+    height: 680px; /* 固定高さ */
     background-color: #1e1e24;
     border-radius: 12px;
     padding: 25px;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
     border: 1px solid #2e2e38;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
 }
 
 .header {
@@ -27,6 +33,7 @@ body {
     border-bottom: 2px solid #2e2e38;
     padding-bottom: 15px;
     margin-bottom: 20px;
+    flex-shrink: 0;
 }
 
 .title {
@@ -42,7 +49,7 @@ body {
     border: none;
 }
 
-/* 🗺️ マップUIレイヤー全体のスタイル */
+/* 階層マップUIレイヤー全体のスタイル */
 .route-map-container {
     background-color: #16161a;
     border: 1px solid #2e2e38;
@@ -50,6 +57,7 @@ body {
     padding: 12px;
     margin-bottom: 20px;
     overflow: hidden;
+    flex-shrink: 0;
 }
 
 .route-map-title {
@@ -69,6 +77,15 @@ body {
     padding: 6px 0;
     box-sizing: border-box;
     scroll-behavior: smooth;
+
+    /* スクロールバーを非表示にする設定 */
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+}
+
+/* Chrome, Safari, Opera でスクロールバーを非表示 */
+.route-scroll-layer::-webkit-scrollbar {
+    display: none;
 }
 
 .route-floor-item {
@@ -156,20 +173,25 @@ body {
     background-color: #4caf50;
 }
 
-/* テキストエリア */
+/* テキストエリア：残りの縦スペースを埋める */
 .text-area {
     font-size: 1.05rem;
     line-height: 1.7;
-    margin-bottom: 30px;
-    min-height: 120px;
+    margin-bottom: 20px;
     white-space: pre-wrap;
+    flex-grow: 1;
+    overflow-y: auto;
 }
 
+/* 選択肢エリア：下部に固定 */
 .choice-container {
     display: flex;
     flex-direction: column;
     gap: 12px;
-    margin-bottom: 25px;
+    margin-bottom: 5px;
+    flex-shrink: 0;
+    min-height: 180px; /* 選択肢3つ分＋隙間の高さを確保 */
+    justify-content: flex-start;
 }
 
 .btn {
@@ -182,6 +204,10 @@ body {
     cursor: pointer;
     text-align: left;
     transition: all 0.2s ease;
+    box-sizing: border-box;
+    height: 50px;
+    display: flex;
+    align-items: center;
 }
 
 .btn:hover {
@@ -194,7 +220,7 @@ body {
     background-color: #3a2a1e;
     border-color: #5a402e;
     color: #ffc107;
-    text-align: center;
+    justify-content: center;
     font-weight: bold;
 }
 
