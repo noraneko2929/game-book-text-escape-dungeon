@@ -146,7 +146,7 @@ class EscapeGameEngine {
 
             const checkpointBtn = document.createElement('button');
             checkpointBtn.className = 'btn btn-retry';
-            checkpointBtn.innerText = 'セーブした階層からリトライする';
+            checkpointBtn.innerText = 'リトライする';
             checkpointBtn.onclick = () => {
                 this.syncHistoryUpTo(retryTarget);
                 this.renderScene(retryTarget);
