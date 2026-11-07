@@ -1,3 +1,5 @@
+@charset "UTF-8";
+
 body {
     font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
     background-color: #121214;
@@ -48,7 +50,6 @@ body {
     border: none;
 }
 
-/* 🗺️ マップUIレイヤー全体のスタイル */
 .route-map-container {
     background-color: #16161a;
     border: 1px solid #2e2e38;
@@ -119,6 +120,7 @@ body {
     border-color: #4caf50;
     color: #ffffff;
 }
+
 .floor-passed .floor-dot {
     background-color: #4caf50;
 }
@@ -130,6 +132,7 @@ body {
     box-shadow: 0 0 10px rgba(33, 150, 243, 0.4);
     font-weight: bold;
 }
+
 .floor-current .floor-dot {
     background-color: #2196f3;
     box-shadow: 0 0 6px #2196f3;
@@ -141,6 +144,7 @@ body {
     color: #666677;
     opacity: 0.6;
 }
+
 .floor-unknown .floor-dot {
     background-color: #444455;
 }
@@ -149,6 +153,7 @@ body {
     background-color: #361a1a;
     border-color: #f44336;
 }
+
 .floor-dead .floor-dot {
     background-color: #f44336;
 }
@@ -235,5 +240,12 @@ body {
     border-color: #f44336;
 }
 
-.success-text { color: #4caf50; font-weight: bold; }
-.danger-text { color: #f44336; font-weight: bold; }
+.success-text {
+    color: #4caf50;
+    font-weight: bold;
+}
+
+.danger-text {
+    color: #f44336;
+    font-weight: bold;
+}
