@@ -1,6 +1,6 @@
 /**
  * gameEngine.js
- * ゲームの描画・状態管理ライブラリ（構文完全クリーン版）
+ * ゲームの描画・状態管理ライブラリ（2→3と3→4の動作完全分離版）
  */
 class EscapeGameEngine {
     constructor(storyData, config = {}) {
@@ -10,9 +10,9 @@ class EscapeGameEngine {
         this.statusBadgeId = config.statusBadgeId || 'status-badge';
         this.startSceneKey = config.startSceneKey || 'start';
         this.saveKey = (config.saveKey || 'escape_game') + '_save_rank';
-        this.historyKey = (config.saveKey || 'escape_game') + '_history_v23';
-        this.checkpointKey = (config.saveKey || 'escape_game') + '_checkpoint_v23';
-        this.revealedKey = (config.saveKey || 'escape_game') + '_revealed_v23';
+        this.historyKey = (config.saveKey || 'escape_game') + '_history_v25';
+        this.checkpointKey = (config.saveKey || 'escape_game') + '_checkpoint_v25';
+        this.revealedKey = (config.saveKey || 'escape_game') + '_revealed_v25';
         this.isAnimating = false;
     }
 
@@ -213,6 +213,10 @@ class EscapeGameEngine {
         const scrollLayer = document.createElement('div');
         scrollLayer.className = 'route-scroll-layer';
 
+        const animWrapper = document.createElement('div');
+        animWrapper.className = 'map-anim-wrapper';
+        scrollLayer.appendChild(animWrapper);
+
         let displayList = [...this.routeHistory];
         if (displayList.length === 0) {
             const currentScene = this.storyData[currentNodeId] || {};
@@ -229,6 +233,7 @@ class EscapeGameEngine {
 
         const itemsToRender = [];
 
+        // 1. 【上】未到達階層（？？？）
         if (!isGameOver && !isEnding) {
             itemsToRender.push({
                 type: 'floor',
@@ -238,6 +243,7 @@ class EscapeGameEngine {
             });
         }
 
+        // 2. 【中】現在地
         const currentItem = displayList[displayList.length - 1] || { id: currentNodeId, name: '現在地' };
         const currentSceneObj = this.storyData[currentItem.id] || {};
         const resolvedCurrent = this.getMapNodeItem(currentItem.id, currentSceneObj);
@@ -257,6 +263,7 @@ class EscapeGameEngine {
             className: currentClass
         });
 
+        // 3. 【下】過去の履歴
         for (let i = displayList.length - 2; i >= 0; i--) {
             const histItem = displayList[i];
             const histSceneObj = this.storyData[histItem.id] || {};
@@ -270,6 +277,7 @@ class EscapeGameEngine {
             });
         }
 
+        // DOM構築
         itemsToRender.forEach((item, index) => {
             const floorItem = document.createElement('div');
             floorItem.className = `route-floor-item ${item.className}`;
@@ -278,56 +286,68 @@ class EscapeGameEngine {
                 <div class="floor-dot"></div>
                 <div class="floor-label">${item.name}</div>
             `;
-            scrollLayer.appendChild(floorItem);
+            animWrapper.appendChild(floorItem);
 
             if (index < itemsToRender.length - 1) {
                 const connector = document.createElement('div');
                 const isNextUnknown = itemsToRender[index + 1].className.includes('floor-unknown');
                 connector.className = `floor-connector ${!isNextUnknown ? 'connector-active' : ''}`;
-                scrollLayer.appendChild(connector);
+                animWrapper.appendChild(connector);
             }
         });
 
         routeMapContainer.appendChild(scrollLayer);
 
-        const itemStepHeight = 42;
-        const maxScrollableHeight = scrollLayer.scrollHeight - scrollLayer.clientHeight;
+        const updateCurrentNodeLabel = () => {
+            const topItems = animWrapper.querySelectorAll('.route-floor-item');
+            const targetItem = topItems.length > 1 ? topItems[1] : topItems[0];
+            
+            if (targetItem) {
+                const sceneObj = this.storyData[currentNodeId] || {};
+                const resolvedNode = this.getMapNodeItem(currentNodeId, sceneObj);
+                
+                let finalClass = isGameOver ? 'route-floor-item floor-current floor-dead' : 'route-floor-item floor-current';
+                targetItem.className = finalClass;
+                targetItem.innerHTML = `
+                    <div class="floor-dot"></div>
+                    <div class="floor-label">${resolvedNode.name}（現在地）</div>
+                `;
 
-        if (animateAdvance && maxScrollableHeight > 0) {
-            scrollLayer.scrollTop = itemStepHeight;
+                const connectors = animWrapper.querySelectorAll('.floor-connector');
+                if (connectors.length > 0) {
+                    connectors[0].classList.add('connector-active');
+                }
+            }
+            this.isAnimating = false;
+        };
 
-            setTimeout(() => {
-                scrollLayer.scrollTo({
-                    top: 0,
-                    behavior: 'smooth'
-                });
-
+        if (animateAdvance) {
+            // 要素が3つの場合（2→3のとき）は全体が枠内に収まるためスクロール不要、4つの場合（3→4のとき）でスライドアニメーション発生
+            if (itemsToRender.length <= 3) {
+                // 2→3: スクロールなしで一定時間後に中央の「？？？」を現在地名に置き換え
                 setTimeout(() => {
-                    const topItems = scrollLayer.querySelectorAll('.route-floor-item');
-                    const targetItem = topItems.length > 1 ? topItems[1] : topItems[0];
-                    
-                    if (targetItem) {
-                        const sceneObj = this.storyData[currentNodeId] || {};
-                        const resolvedNode = this.getMapNodeItem(currentNodeId, sceneObj);
-                        
-                        let finalClass = isGameOver ? 'route-floor-item floor-current floor-dead' : 'route-floor-item floor-current';
-                        targetItem.className = finalClass;
-                        targetItem.innerHTML = `
-                            <div class="floor-dot"></div>
-                            <div class="floor-label">${resolvedNode.name}（現在地）</div>
-                        `;
+                    updateCurrentNodeLabel();
+                }, 300);
+            } else {
+                // 3→4: 1ステップ（42px）下から上へCSSアニメーションでスライド
+                const stepHeight = 42;
+                animWrapper.style.transition = 'none';
+                animWrapper.style.transform = `translateY(${stepHeight}px)`;
 
-                        const connectors = scrollLayer.querySelectorAll('.floor-connector');
-                        if (connectors.length > 0) {
-                            connectors[0].classList.add('connector-active');
-                        }
-                    }
-                    this.isAnimating = false;
-                }, 600);
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => {
+                        animWrapper.style.transition = 'transform 0.5s cubic-bezier(0.25, 1, 0.5, 1)';
+                        animWrapper.style.transform = 'translateY(0px)';
 
-            }, 50);
+                        setTimeout(() => {
+                            updateCurrentNodeLabel();
+                        }, 500);
+                    });
+                });
+            }
         } else {
-            scrollLayer.scrollTop = 0;
+            animWrapper.style.transition = 'none';
+            animWrapper.style.transform = 'translateY(0px)';
             this.isAnimating = false;
         }
     }
