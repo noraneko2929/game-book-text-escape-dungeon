@@ -1,6 +1,6 @@
 /**
  * gameEngine.js
- * ゲームの描画・状態管理ライブラリ（生還時の名称・未到達表示修正版）
+ * ゲームの描画・状態管理ライブラリ（生還時の「？？？置き換え」＆「現在地非表示」対応版）
  */
 class EscapeGameEngine {
     constructor(storyData, config = {}) {
@@ -29,8 +29,12 @@ class EscapeGameEngine {
         this.renderScene(targetScene, false);
     }
 
+    isEndingScene(sceneKey) {
+        return sceneKey === 'escape_true' || sceneKey.startsWith('escape_');
+    }
+
     getMapNodeItem(sceneKey, scene) {
-        if (sceneKey.startsWith('escape')) {
+        if (this.isEndingScene(sceneKey)) {
             return { id: sceneKey, name: '地上への生還' };
         }
 
@@ -53,7 +57,7 @@ class EscapeGameEngine {
     }
 
     getSceneRank(sceneKey) {
-        if (sceneKey.startsWith('escape')) return 'upper';
+        if (this.isEndingScene(sceneKey)) return 'upper';
         const match = sceneKey.match(/^f(\d+)/);
         if (!match) return 'deep';
         
@@ -113,11 +117,11 @@ class EscapeGameEngine {
         this.updateCheckpoint(sceneKey);
 
         const nodeItem = this.getMapNodeItem(sceneKey, scene);
-        const isEnding = sceneKey.startsWith('escape');
+        const isEnding = this.isEndingScene(sceneKey);
         const isGameOver = (!scene.choices || scene.choices.length === 0) && !isEnding;
 
         let isNewFloorAdvanced = false;
-        if (!isGameOver) {
+        if (!isGameOver && !isEnding) {
             localStorage.setItem(this.saveKey, sceneKey);
             if (!oldLastItem || oldLastItem.id !== nodeItem.id) {
                 if (oldLastItem) {
@@ -126,6 +130,8 @@ class EscapeGameEngine {
                 this.routeHistory.push(nodeItem);
                 localStorage.setItem(this.historyKey, JSON.stringify(this.routeHistory));
             }
+        } else if (isEnding) {
+            localStorage.setItem(this.saveKey, sceneKey);
         }
 
         const textDisplay = document.getElementById(this.textDisplayId);
@@ -231,41 +237,51 @@ class EscapeGameEngine {
 
         const itemsToRender = [];
 
-        // 1. 【上】未到達階層（？？？） ※ゲームオーバー時やエンディング（生還時）には表示しない
-        if (!isGameOver && !isEnding) {
+        if (isEnding) {
+            // 生還時は上の「？？？(未到達)」を追加せず、現在の到達先を生還専用の表示枠として最上部に配置（「（現在地）」は付けない）
+            const currentSceneObj = this.storyData[currentNodeId] || {};
+            const resolvedCurrent = this.getMapNodeItem(currentNodeId, currentSceneObj);
             itemsToRender.push({
                 type: 'floor',
-                id: 'unknown_next',
-                name: '？？？ (未到達)',
-                className: 'floor-unknown'
+                id: currentNodeId,
+                name: resolvedCurrent.name,
+                className: 'floor-current floor-clear'
+            });
+        } else {
+            // 1. 【上】未到達階層（？？？） ※ゲームオーバー時は非表示
+            if (!isGameOver) {
+                itemsToRender.push({
+                    type: 'floor',
+                    id: 'unknown_next',
+                    name: '？？？ (未到達)',
+                    className: 'floor-unknown'
+                });
+            }
+
+            // 2. 【中】現在地
+            const currentItem = displayList[displayList.length - 1] || { id: currentNodeId, name: '現在地' };
+            const currentSceneObj = this.storyData[currentItem.id] || {};
+            const resolvedCurrent = this.getMapNodeItem(currentItem.id, currentSceneObj);
+            
+            let currentClass = isGameOver ? 'floor-current floor-dead' : 'floor-current';
+            let labelText = `${resolvedCurrent.name}（現在地）`;
+
+            if (animateAdvance && currentItem.id === targetAnimatingId) {
+                labelText = '？？？ (未到達)';
+                currentClass = 'floor-unknown';
+            }
+
+            itemsToRender.push({
+                type: 'floor',
+                id: currentItem.id,
+                name: labelText,
+                className: currentClass
             });
         }
 
-        // 2. 【中】現在地
-        const currentItem = displayList[displayList.length - 1] || { id: currentNodeId, name: '現在地' };
-        const currentSceneObj = this.storyData[currentItem.id] || {};
-        const resolvedCurrent = this.getMapNodeItem(currentItem.id, currentSceneObj);
-        
-        let currentClass = 'floor-current';
-        if (isGameOver) currentClass = 'floor-current floor-dead';
-        else if (isEnding) currentClass = 'floor-current floor-clear';
-
-        let labelText = `${resolvedCurrent.name}（現在地）`;
-
-        if (animateAdvance && currentItem.id === targetAnimatingId) {
-            labelText = '？？？ (未到達)';
-            currentClass = 'floor-unknown';
-        }
-
-        itemsToRender.push({
-            type: 'floor',
-            id: currentItem.id,
-            name: labelText,
-            className: currentClass
-        });
-
-        // 3. 【下】過去の履歴
-        for (let i = displayList.length - 2; i >= 0; i--) {
+        // 3. 【下】過去の履歴（生還時は履歴の末尾＝直前の階層を含め、それ以前を過去履歴として描画）
+        const historyStartIndex = isEnding ? displayList.length - 2 : displayList.length - 2;
+        for (let i = historyStartIndex; i >= 0; i--) {
             const histItem = displayList[i];
             const histSceneObj = this.storyData[histItem.id] || {};
             const resolvedHist = this.getMapNodeItem(histItem.id, histSceneObj);
@@ -327,13 +343,11 @@ class EscapeGameEngine {
                     const topItems = scrollLayer.querySelectorAll('.route-floor-item');
                     const targetItem = topItems.length > 1 ? topItems[1] : topItems[0];
                     
-                    if (targetItem) {
+                    if (targetItem && !isEnding) {
                         const sceneObj = this.storyData[currentNodeId] || {};
                         const resolvedNode = this.getMapNodeItem(currentNodeId, sceneObj);
                         
-                        let finalClass = 'floor-current';
-                        if (isGameOver) finalClass = 'floor-current floor-dead';
-                        else if (isEnding) finalClass = 'floor-current floor-clear';
+                        let finalClass = isGameOver ? 'floor-current floor-dead' : 'floor-current';
 
                         targetItem.className = `route-floor-item ${finalClass}`;
                         targetItem.innerHTML = `
@@ -357,13 +371,11 @@ class EscapeGameEngine {
                 const topItems = scrollLayer.querySelectorAll('.route-floor-item');
                 const targetItem = topItems.length > 1 ? topItems[1] : topItems[0];
                 
-                if (targetItem) {
+                if (targetItem && !isEnding) {
                     const sceneObj = this.storyData[currentNodeId] || {};
                     const resolvedNode = this.getMapNodeItem(currentNodeId, sceneObj);
                     
-                    let finalClass = 'floor-current';
-                    if (isGameOver) finalClass = 'floor-current floor-dead';
-                    else if (isEnding) finalClass = 'floor-current floor-clear';
+                    let finalClass = isGameOver ? 'floor-current floor-dead' : 'floor-current';
 
                     targetItem.className = `route-floor-item ${finalClass}`;
                     targetItem.innerHTML = `
