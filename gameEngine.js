@@ -1,6 +1,6 @@
 /**
  * gameEngine.js
- * ゲームの描画・状態管理ライブラリ（スクロールアップ＆到達時演出対応版）
+ * ゲームの描画・状態管理ライブラリ（滑らかなスクロール演出＆初期階層対応版）
  */
 class EscapeGameEngine {
     constructor(storyData, config = {}) {
@@ -10,9 +10,9 @@ class EscapeGameEngine {
         this.statusBadgeId = config.statusBadgeId || 'status-badge';
         this.startSceneKey = config.startSceneKey || 'start';
         this.saveKey = (config.saveKey || 'escape_game') + '_save_rank';
-        this.historyKey = (config.saveKey || 'escape_game') + '_history_v14';
-        this.checkpointKey = (config.saveKey || 'escape_game') + '_checkpoint_v14';
-        this.revealedKey = (config.saveKey || 'escape_game') + '_revealed_v14';
+        this.historyKey = (config.saveKey || 'escape_game') + '_history_v15';
+        this.checkpointKey = (config.saveKey || 'escape_game') + '_checkpoint_v15';
+        this.revealedKey = (config.saveKey || 'escape_game') + '_revealed_v15';
         this.isAnimating = false;
     }
 
@@ -159,7 +159,6 @@ class EscapeGameEngine {
                 const button = document.createElement('button');
                 button.className = 'btn';
                 button.innerText = choice.text;
-                // アニメーション中はボタンを一時無効化して連打を防止
                 button.onclick = () => {
                     if (this.isAnimating) return;
                     this.renderScene(choice.next, true);
@@ -221,38 +220,24 @@ class EscapeGameEngine {
         }
 
         const isEnding = currentNodeId.startsWith('escape_');
-
-        // アニメーション演出を行う場合：
-        // 履歴の最後尾（今進んだ新しい階層）を、一時的に「？？？」として最上部に配置した状態からスタートする
-        let renderList = [...displayList];
         let targetAnimatingId = null;
 
-        if (animateAdvance && renderList.length > 1) {
+        if (animateAdvance && displayList.length > 1) {
             this.isAnimating = true;
-            targetAnimatingId = renderList[renderList.length - 1].id;
+            targetAnimatingId = displayList[displayList.length - 1].id;
         }
 
         const itemsToRender = [];
 
-        // 1. 最上部アイテムの決定（アニメーション中なら「？？？」、通常なら通常の未到達 or 現在地）
-        if (!isGameOver && !isEnding) {
-            itemsToRender.push({
-                type: 'floor',
-                id: 'unknown_next',
-                name: '？？？ (未到達)',
-                className: 'floor-unknown'
-            });
-        }
-
-        // 2. 履歴の逆順リストを生成
-        const reversedHistory = [...renderList].reverse();
+        // 1. 履歴の順番を正しく整理（上が「？？？/未来」、真ん中が「現在地」、下が「過去」）
+        const reversedHistory = [...displayList].reverse();
+        
         reversedHistory.forEach((item, index) => {
             const isCurrent = (item.id === currentNodeId || index === 0);
             let stateClass = isCurrent ? 'floor-current' : 'floor-passed';
             if (isCurrent && isGameOver) stateClass = 'floor-dead';
 
             let displayName = item.name;
-            // 演出中で、かつ今まさに進んだ新しい階層のアイテムである場合は、一時的に「？？？」として描画する
             if (animateAdvance && item.id === targetAnimatingId && isCurrent) {
                 displayName = '？？？ (未到達)';
                 stateClass = 'floor-unknown';
@@ -266,10 +251,19 @@ class EscapeGameEngine {
                 type: 'floor',
                 id: item.id,
                 name: displayName,
-                className: stateClass,
-                originalItem: item
+                className: stateClass
             });
         });
+
+        // 2. 最上部に「？？？ (未到達)」枠をさらに追加（まだゲームオーバー・エンディングでなければ）
+        if (!isGameOver && !isEnding) {
+            itemsToRender.unshift({
+                type: 'floor',
+                id: 'unknown_next',
+                name: '？？？ (未到達)',
+                className: 'floor-unknown'
+            });
+        }
 
         // DOM構築
         itemsToRender.forEach((item, index) => {
@@ -292,46 +286,50 @@ class EscapeGameEngine {
 
         routeMapContainer.appendChild(scrollLayer);
 
-        if (animateAdvance) {
-            // 【演出のステップ】
-            // 最初に、新しく追加された最上部の「？？？枠」分だけスクロールを上にオフセット（約42px: アイテム高さ28px+コネクタ14px）
+        // 初期階層など、スクロール余地がない（高さが足りない）場合はアニメーションをスキップして安全に配置
+        const maxScrollTop = scrollLayer.scrollHeight - scrollLayer.clientHeight;
+
+        if (animateAdvance && maxScrollTop > 0) {
+            // ① 最初に「？？？枠」の高さ分だけ下にずらした位置からスタート
             scrollLayer.scrollTop = 42;
 
             setTimeout(() => {
-                // スムーズスクロールで「0（最上部）」までスクロールアップさせる
+                // ② 宛先（トップ＝0）へ向けて、時間をかけてゆっくりスクロールアップ（アニメーションに見せる）
                 scrollLayer.scrollTo({
                     top: 0,
                     behavior: 'smooth'
                 });
 
-                // スクロールアニメーションが完了する頃合い（約500ms後）に、
-                // 「？？？枠」を正式な階層名・現在地デザインへ書き換える
+                // ③ スクロールが中央（トップ）に到達した頃合い（約700ms後）に、正式な階層名へ書き換える
                 setTimeout(() => {
-                    const topItem = scrollLayer.querySelector('.route-floor-item');
-                    if (topItem) {
+                    const topItems = scrollLayer.querySelectorAll('.route-floor-item');
+                    // 上から2番目（スクロールアップして中央に来たアイテム）を現在地として正式名称にする
+                    const targetItem = topItems.length > 1 ? topItems[1] : topItems[0];
+                    
+                    if (targetItem) {
                         const sceneObj = this.storyData[currentNodeId] || {};
                         const resolvedNode = this.getMapNodeItem(currentNodeId, sceneObj);
                         
                         let finalClass = isGameOver ? 'route-floor-item floor-current floor-dead' : 'route-floor-item floor-current';
-                        topItem.className = finalClass;
-                        topItem.innerHTML = `
+                        targetItem.className = finalClass;
+                        targetItem.innerHTML = `
                             <div class="floor-dot"></div>
                             <div class="floor-label">${resolvedNode.name}（現在地）</div>
                         `;
 
-                        // 2番目のコネクターもアクティブ色に点灯させる
-                        const topConnector = scrollLayer.querySelector('.floor-connector');
-                        if (topConnector) {
-                            topConnector.classList.add('connector-active');
+                        const connectors = scrollLayer.querySelectorAll('.floor-connector');
+                        if (connectors.length > 0) {
+                            connectors[0].classList.add('connector-active');
                         }
                     }
                     this.isAnimating = false;
-                }, 550);
+                }, 750);
 
             }, 50);
         } else {
             setTimeout(() => {
                 scrollLayer.scrollTop = 0;
+                this.isAnimating = false;
             }, 10);
         }
     }
