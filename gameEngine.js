@@ -19,7 +19,20 @@ class EscapeGameEngine {
     }
 
     init() {
-        this.routeHistory = JSON.parse(localStorage.getItem(this.historyKey) || '[]');
+        try {
+            const savedHistory = JSON.parse(localStorage.getItem(this.historyKey) || '[]');
+            this.routeHistory = Array.isArray(savedHistory)
+                ? savedHistory.filter(item =>
+                    item &&
+                    typeof item.id === 'string' &&
+                    typeof item.name === 'string'
+                )
+                : [];
+        } catch (error) {
+            console.warn('Invalid route history was discarded.', error);
+            this.routeHistory = [];
+            localStorage.removeItem(this.historyKey);
+        }
         this.currentCheckpoint = localStorage.getItem(this.checkpointKey) || this.startSceneKey;
         this.hasReachedF15 = localStorage.getItem(this.revealedKey) === 'true';
         
@@ -130,7 +143,8 @@ class EscapeGameEngine {
                 this.routeHistory.push(nodeItem);
                 localStorage.setItem(this.historyKey, JSON.stringify(this.routeHistory));
             }
-        } else if (isEnding) {
+        } else {
+            // ゲームオーバー画面も保存し、再読み込み後に直前の場面へ戻らないようにする
             localStorage.setItem(this.saveKey, sceneKey);
         }
 
@@ -280,7 +294,7 @@ class EscapeGameEngine {
         }
 
         // 3. 【下】過去の履歴（生還時は履歴の末尾＝直前の階層を含め、それ以前を過去履歴として描画）
-        const historyStartIndex = isEnding ? displayList.length - 2 : displayList.length - 2;
+        const historyStartIndex = isEnding ? displayList.length - 1 : displayList.length - 2;
         for (let i = historyStartIndex; i >= 0; i--) {
             const histItem = displayList[i];
             const histSceneObj = this.storyData[histItem.id] || {};
@@ -299,10 +313,12 @@ class EscapeGameEngine {
             const floorItem = document.createElement('div');
             floorItem.className = `route-floor-item ${item.className}`;
             floorItem.dataset.id = item.id;
-            floorItem.innerHTML = `
-                <div class="floor-dot"></div>
-                <div class="floor-label">${item.name}</div>
-            `;
+            const floorDot = document.createElement('div');
+            floorDot.className = 'floor-dot';
+            const floorLabel = document.createElement('div');
+            floorLabel.className = 'floor-label';
+            floorLabel.textContent = item.name;
+            floorItem.append(floorDot, floorLabel);
             scrollLayer.appendChild(floorItem);
 
             if (index < itemsToRender.length - 1) {
@@ -350,10 +366,12 @@ class EscapeGameEngine {
                         let finalClass = isGameOver ? 'floor-current floor-dead' : 'floor-current';
 
                         targetItem.className = `route-floor-item ${finalClass}`;
-                        targetItem.innerHTML = `
-                            <div class="floor-dot"></div>
-                            <div class="floor-label">${resolvedNode.name}（現在地）</div>
-                        `;
+                        const floorDot = document.createElement('div');
+                        floorDot.className = 'floor-dot';
+                        const floorLabel = document.createElement('div');
+                        floorLabel.className = 'floor-label';
+                        floorLabel.textContent = `${resolvedNode.name}（現在地）`;
+                        targetItem.replaceChildren(floorDot, floorLabel);
 
                         const connectors = scrollLayer.querySelectorAll('.floor-connector');
                         if (connectors.length > 0) {
@@ -378,10 +396,12 @@ class EscapeGameEngine {
                     let finalClass = isGameOver ? 'floor-current floor-dead' : 'floor-current';
 
                     targetItem.className = `route-floor-item ${finalClass}`;
-                    targetItem.innerHTML = `
-                        <div class="floor-dot"></div>
-                        <div class="floor-label">${resolvedNode.name}（現在地）</div>
-                    `;
+                    const floorDot = document.createElement('div');
+                    floorDot.className = 'floor-dot';
+                    const floorLabel = document.createElement('div');
+                    floorLabel.className = 'floor-label';
+                    floorLabel.textContent = `${resolvedNode.name}（現在地）`;
+                    targetItem.replaceChildren(floorDot, floorLabel);
 
                     const connectors = scrollLayer.querySelectorAll('.floor-connector');
                     if (connectors.length > 0) {
