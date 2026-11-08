@@ -313,7 +313,7 @@ const storyData = {
     status: "中層・第15階層（崩落の窮地）",
     choices: [
       { text: "折れた支柱の木片で、崩れた隙間を少しずつ広げる", next: "f14_p1" },
-      { text: "大声で助けを呼びながら、力任せに脚を引き抜こうとする", next: "gameover_crushed_15" }
+      { text: "大声で助けを呼びながら、崩れた岩を力任せに押しのける", next: "gameover_crushed_15" }
     ]
   },
 
@@ -497,7 +497,7 @@ const storyData = {
     status: "中層・第11階層（滑落寸前）",
     choices: [
       { text: "鉄輪をつかみ、身体を引き寄せて這い上がる", next: "f10_p1" },
-      { text: "足を振りほどいて無理に立ち上がる", next: "gameover_f11_fall" }
+      { text: "鉄輪から手を離し、無理に立ち上がろうとする", next: "gameover_f11_fall" }
     ]
   },
 
