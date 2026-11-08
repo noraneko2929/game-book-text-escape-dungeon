@@ -1,0 +1,10 @@
+{
+  "name": "lab-escape",
+  "version": "1.0.0",
+  "private": true,
+  "description": "地下ダンジョン脱出ゲーム",
+  "scripts": {
+    "test": "node --test",
+    "check:syntax": "node --check storyData.js && node --check gameEngine.js"
+  }
+}
