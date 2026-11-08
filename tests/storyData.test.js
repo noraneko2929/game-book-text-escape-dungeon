@@ -105,7 +105,7 @@ test('key action choices have separate result scenes and the opening explains th
     for (const key of ['f20_p3', 'f14_p3', 'f14_p4', 'f13_p3']) {
         assert.ok(story[key], `${key}: action result scene must exist`);
     }
-    assert.equal(story.f20_p2.choices.find(choice => choice.next === 'f20_p3')?.text.includes('布'), true);
+    assert.equal(story.f20_p2.choices.find(choice => choice.next === 'f20_p3')?.text.includes('服'), true);
     assert.equal(story.f14_p2.choices.find(choice => choice.next === 'f14_p3')?.text.includes('泥'), true);
     assert.equal(story.f13_p2.choices[0].next, 'f13_p3');
     assert.ok(story.start.text.includes('駆け出しの冒険者'));
