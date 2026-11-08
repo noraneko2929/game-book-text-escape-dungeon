@@ -79,3 +79,22 @@ test('story avoids prohibited terminology and obvious editing artifacts', () => 
         }
     }
 });
+
+
+test('story pages stay concise and the added recovery beats remain reachable', () => {
+    const story = loadStory();
+    for (const [key, scene] of Object.entries(story)) {
+        const visibleText = scene.text.replace(/<[^>]*>/g, '').replace(/\s/g, '');
+        if (!key.startsWith('gameover_')) {
+            assert.ok(visibleText.length <= 90, `${key}: page text should stay within 90 characters`);
+        }
+    }
+
+    for (const key of [
+        'f16_p3', 'f16_pinch_shaft', 'gameover_f16_shaft',
+        'f11_p2', 'f11_pinch_stair', 'gameover_f11_fall',
+        'f6_p2', 'f6_pinch_crack', 'gameover_f6_crush'
+    ]) {
+        assert.ok(story[key], `${key}: pacing / recovery scene must exist`);
+    }
+});
