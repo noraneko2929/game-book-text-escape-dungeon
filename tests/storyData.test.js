@@ -125,7 +125,7 @@ test('ending and danger scene line breaks are real newlines, not visible escape 
 test('floor 15 reveal and demon patrol are separated into distinct pages', () => {
     const story = loadStory();
     assert.ok(story.f15_p1.choices.some(choice => choice.next === 'f15_p1b'));
-    assert.ok(story.f15_p1b, 'the wraith encounter setup page must exist');
+    assert.ok(story.f15_p1b, 'the demon patrol setup page must exist');
     assert.ok(story.f15_p1b.text.includes('爪痕'));
     assert.ok(story.f15_p1b.text.includes('赤い光'));
 });
