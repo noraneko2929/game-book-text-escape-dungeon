@@ -122,12 +122,12 @@ test('ending and danger scene line breaks are real newlines, not visible escape 
     }
 });
 
-test('floor 15 reveal and wraith encounter are separated into distinct pages', () => {
+test('floor 15 reveal and demon patrol are separated into distinct pages', () => {
     const story = loadStory();
     assert.ok(story.f15_p1.choices.some(choice => choice.next === 'f15_p1b'));
     assert.ok(story.f15_p1b, 'the wraith encounter setup page must exist');
-    assert.ok(story.f15_p1b.text.includes('白い靄'));
-    assert.ok(story.f15_p1b.text.includes('人影'));
+    assert.ok(story.f15_p1b.text.includes('爪痕'));
+    assert.ok(story.f15_p1b.text.includes('赤い光'));
 });
 
 test('floor 15 keeps the encounter within the dungeon demon theme', () => {
@@ -170,4 +170,52 @@ test('scene narration does not reveal the selected route or repeat the choice ac
     assert.ok(!story.f16_p1.text.includes('待つ'));
     assert.ok(!story.f18_p2.text.includes('周期をうかがう'));
     assert.ok(!story.f12_p1.text.includes('目を凝らす'));
+});
+
+
+test('floor 20 choices are foreshadowed by visible environmental clues', () => {
+    const story = loadStory();
+    assert.ok(story.f20_p1.text.includes('水音'));
+    assert.ok(story.f20_p1.text.includes('裂け目'));
+});
+
+test('floor 19 misleading ledge has a distinct, explained failure outcome', () => {
+    const story = loadStory();
+    assert.ok(story.f19_p2.choices.some(choice => choice.next === 'gameover_f19_shelf'));
+    assert.ok(story.gameover_f19_shelf.text.includes('岩棚'));
+    assert.ok(story.gameover_f19_shelf.text.includes('崩れかけた'));
+});
+
+test('floor 18 dangerous crystal and rockfall provide observable clues', () => {
+    const story = loadStory();
+    assert.ok(story.f18_p1.text.includes('耳鳴り'));
+    assert.ok(story.gameover_crystal_blast.text.includes('叩き割った'));
+    assert.ok(story.f18_p2.text.includes('一定の間隔'));
+    assert.equal(story.f18_p2.choices[0].next, 'f18_pinch_wait');
+    assert.equal(story.f18_pinch_wait.choices[0].next, 'f18_p3');
+});
+
+test('floor 13 lever is concealed and described consistently as a magical seal', () => {
+    const story = loadStory();
+    assert.ok(story.f13_p1.text.includes('石板'));
+    assert.ok(!story.f13_p1.text.includes('小さなレバー'));
+    assert.ok(story.f13_p2.text.includes('レバーが隠れていた'));
+    assert.ok(story.f13_pinch_gate.text.includes('封印の反発'));
+    assert.ok(story.f13_p2.status.includes('隠されたレバー'));
+});
+
+test('floor 17 rope distraction explains how the rope reaches beyond the gate', () => {
+    const story = loadStory();
+    assert.ok(story.f17_p3.text.includes('柱に当たって'));
+    assert.ok(story.f17_p3.text.includes('門の向こう'));
+});
+
+test('non-ending scene text remains within the 90-character mobile guideline', () => {
+    const story = loadStory();
+    for (const [key, scene] of Object.entries(story)) {
+        if (!key.startsWith('gameover_')) {
+            const visibleText = scene.text.replace(/<[^>]*>/g, '').replace(/\\s/g, '');
+            assert.ok(visibleText.length <= 90, `${key}: ${visibleText.length} characters`);
+        }
+    }
 });
