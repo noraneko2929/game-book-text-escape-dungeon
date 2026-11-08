@@ -2,22 +2,24 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description" content="武器を持たない初心者冒険者となり、崩落した地下迷宮から知恵と慎重さで生還を目指すテキストアドベンチャー。">
+    <meta name="theme-color" content="#121214">
     <title>地下ダンジョン脱出ゲーム：暗黒回廊からの生還</title>
     <!-- 外部スタイルシートの読み込み -->
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<div class="game-container">
+<main class="game-container">
     <div class="header">
         <h1 class="title">地下ダンジョン脱出ゲーム：暗黒回廊からの生還</h1>
         <div id="status-badge" class="badge"></div>
     </div>
     
-    <div id="text-display" class="text-area"></div>
-    <div id="choice-display" class="choice-container"></div>
-</div>
+    <div id="text-display" class="text-area" role="status" aria-live="polite" aria-atomic="true" tabindex="-1"></div>
+    <div id="choice-display" class="choice-container" aria-label="行動を選択"></div>
+</main>
 
 <script src="storyData.js"></script>
 <script src="gameEngine.js"></script>
