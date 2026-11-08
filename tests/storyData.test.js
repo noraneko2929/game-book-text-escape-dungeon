@@ -85,7 +85,7 @@ test('story pages stay concise and the added recovery beats remain reachable', (
     const story = loadStory();
     for (const [key, scene] of Object.entries(story)) {
         const visibleText = scene.text.replace(/<[^>]*>/g, '').replace(/\s/g, '');
-        if (!key.startsWith('gameover_')) {
+        if (!key.startsWith('gameover_') && !key.startsWith('escape_')) {
             assert.ok(visibleText.length <= 90, `${key}: page text should stay within 90 characters`);
         }
     }
@@ -144,6 +144,9 @@ test('the opening uses a hidden passage and vertical shaft rather than a cave-in
     const story = loadStory();
     assert.ok(story.start.text.includes('隠し通路'));
     assert.ok(story.start.text.includes('縦穴'));
+    assert.ok(story.start.text.includes('駆け出しの冒険者'));
+    assert.ok(story.f17_p2.text.includes('石片'), 'the distraction stone must be present at the gate');
+    assert.ok(story.f19_p3.choices[0].text.includes('小石'), 'the floor 19 distraction must use a locally available pebble');
     assert.ok(!story.start.text.includes('崩落に巻き込まれ'));
 });
 
@@ -208,13 +211,14 @@ test('floor 13 lever is concealed and described consistently as a magical seal',
 test('floor 17 rope distraction explains how the rope reaches beyond the gate', () => {
     const story = loadStory();
     assert.ok(story.f17_p3.text.includes('柱に当たって'));
+    assert.ok(story.f17_p3.text.includes('手繰り寄せる'), 'the rope must be recoverable from the far side of the gate');
     assert.ok(story.f17_p3.text.includes('門の向こう'));
 });
 
 test('non-ending scene text remains within the 90-character mobile guideline', () => {
     const story = loadStory();
     for (const [key, scene] of Object.entries(story)) {
-        if (!key.startsWith('gameover_')) {
+        if (!key.startsWith('gameover_') && !key.startsWith('escape_')) {
             const visibleText = scene.text.replace(/<[^>]*>/g, '').replace(/\s/g, '');
             assert.ok(visibleText.length <= 90, `${key}: ${visibleText.length} characters`);
         }
