@@ -1,0 +1,81 @@
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const vm = require('node:vm');
+
+const root = path.join(__dirname, '..');
+const storySource = fs.readFileSync(path.join(root, 'storyData.js'), 'utf8');
+const engineSource = fs.readFileSync(path.join(root, 'gameEngine.js'), 'utf8');
+
+function loadStory() {
+    const context = vm.createContext({});
+    vm.runInContext(`${storySource}\n;globalThis.__storyData = storyData;`, context);
+    return context.__storyData;
+}
+
+test('story and engine scripts have valid JavaScript syntax', () => {
+    assert.doesNotThrow(() => new vm.Script(storySource));
+    assert.doesNotThrow(() => new vm.Script(engineSource));
+});
+
+test('every scene has the expected data structure', () => {
+    const story = loadStory();
+    assert.ok(story.start, 'start scene must exist');
+    assert.ok(story.escape_true, 'successful ending must exist');
+
+    for (const [key, scene] of Object.entries(story)) {
+        assert.equal(typeof scene.text, 'string', `${key}: text must be a string`);
+        assert.ok(scene.text.trim().length > 0, `${key}: text must not be empty`);
+        assert.equal(typeof scene.status, 'string', `${key}: status must be a string`);
+        assert.ok(Array.isArray(scene.choices), `${key}: choices must be an array`);
+
+        for (const [index, choice] of scene.choices.entries()) {
+            assert.equal(typeof choice.text, 'string', `${key}[${index}]: choice text`);
+            assert.ok(choice.text.trim().length > 0, `${key}[${index}]: choice must not be empty`);
+            assert.equal(typeof choice.next, 'string', `${key}[${index}]: next must be a string`);
+            assert.ok(story[choice.next], `${key}[${index}]: missing target ${choice.next}`);
+        }
+
+        if (key.startsWith('gameover_') || key.startsWith('escape_')) {
+            assert.equal(scene.choices.length, 0, `${key}: endings must be terminal`);
+        } else {
+            assert.ok(scene.choices.length > 0, `${key}: non-ending scene needs an action`);
+        }
+    }
+});
+
+test('all scenes are reachable from the beginning', () => {
+    const story = loadStory();
+    const reached = new Set();
+    const pending = ['start'];
+
+    while (pending.length > 0) {
+        const key = pending.pop();
+        if (reached.has(key)) continue;
+        reached.add(key);
+        for (const choice of story[key].choices) pending.push(choice.next);
+    }
+
+    assert.deepEqual([...Object.keys(story)].filter(key => !reached.has(key)), []);
+    assert.ok(reached.has('escape_true'), 'the successful ending must be reachable');
+});
+
+test('the story preserves the known floor-number reveal and checkpoints', () => {
+    const story = loadStory();
+    assert.ok(story.f15_p1, 'floor 15 reveal scene must exist');
+    assert.ok(engineSource.includes("sceneKey === 'f15_p1'"), 'floor 15 checkpoint must remain');
+    assert.ok(engineSource.includes("sceneKey === 'f10_p1'"), 'floor 10 checkpoint must remain');
+    assert.ok(engineSource.includes("'第??階層'"), 'unknown floors must remain hidden before the reveal');
+});
+
+test('story avoids prohibited terminology and obvious editing artifacts', () => {
+    const story = loadStory();
+    for (const [key, scene] of Object.entries(story)) {
+        assert.ok(!scene.status.includes('深層'), `${key}: prohibited floor terminology`);
+        assert.ok(!scene.text.includes('登 the'), `${key}: stray editing artifact`);
+        for (const choice of scene.choices) {
+            assert.ok(!choice.text.includes('登 the'), `${key}: stray editing artifact in choice`);
+        }
+    }
+});

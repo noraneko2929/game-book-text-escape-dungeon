@@ -16,14 +16,59 @@ class EscapeGameEngine {
         this.checkpointKey = baseKey + '_checkpoint';
         this.revealedKey = baseKey + '_revealed';
         this.isAnimating = false;
+        this.memoryStorage = new Map();
+    }
+
+    getStoredValue(key) {
+        try {
+            const value = localStorage.getItem(key);
+            return value === null ? this.memoryStorage.get(key) ?? null : value;
+        } catch (error) {
+            return this.memoryStorage.get(key) ?? null;
+        }
+    }
+
+    setStoredValue(key, value) {
+        const normalizedValue = String(value);
+        this.memoryStorage.set(key, normalizedValue);
+        try {
+            localStorage.setItem(key, normalizedValue);
+        } catch (error) {
+            console.warn('Persistent storage is unavailable; progress will last only for this session.', error);
+        }
+    }
+
+    removeStoredValue(key) {
+        this.memoryStorage.delete(key);
+        try {
+            localStorage.removeItem(key);
+        } catch (error) {
+            console.warn('Could not remove persistent save data.', error);
+        }
     }
 
     init() {
-        this.routeHistory = JSON.parse(localStorage.getItem(this.historyKey) || '[]');
-        this.currentCheckpoint = localStorage.getItem(this.checkpointKey) || this.startSceneKey;
-        this.hasReachedF15 = localStorage.getItem(this.revealedKey) === 'true';
+        try {
+            const savedHistory = JSON.parse(this.getStoredValue(this.historyKey) || '[]');
+            this.routeHistory = Array.isArray(savedHistory)
+                ? savedHistory.filter(item =>
+                    item &&
+                    typeof item.id === 'string' &&
+                    typeof item.name === 'string'
+                )
+                : [];
+        } catch (error) {
+            console.warn('Invalid route history was discarded.', error);
+            this.routeHistory = [];
+            this.removeStoredValue(this.historyKey);
+        }
+        const storedCheckpoint = this.getStoredValue(this.checkpointKey);
+        this.currentCheckpoint = (storedCheckpoint && this.storyData[storedCheckpoint])
+            ? storedCheckpoint
+            : this.startSceneKey;
+        this.hasReachedF15 = this.getStoredValue(this.revealedKey) === 'true';
         
-        const savedScene = localStorage.getItem(this.saveKey);
+        const savedScene = this.getStoredValue(this.saveKey);
         const targetScene = (savedScene && this.storyData[savedScene]) ? savedScene : this.currentCheckpoint;
 
         this.renderScene(targetScene, false);
@@ -73,7 +118,7 @@ class EscapeGameEngine {
             const floorNum = parseInt(match[1], 10);
             if (floorNum <= 15) {
                 this.hasReachedF15 = true;
-                localStorage.setItem(this.revealedKey, 'true');
+                this.setStoredValue(this.revealedKey, 'true');
             }
         }
 
@@ -88,7 +133,7 @@ class EscapeGameEngine {
 
         if (newCheckpoint) {
             this.currentCheckpoint = newCheckpoint;
-            localStorage.setItem(this.checkpointKey, this.currentCheckpoint);
+            this.setStoredValue(this.checkpointKey, this.currentCheckpoint);
         }
     }
 
@@ -103,7 +148,7 @@ class EscapeGameEngine {
         } else {
             this.routeHistory = [targetItem];
         }
-        localStorage.setItem(this.historyKey, JSON.stringify(this.routeHistory));
+        this.setStoredValue(this.historyKey, JSON.stringify(this.routeHistory));
     }
 
     renderScene(sceneKey, useTransition = true) {
@@ -122,16 +167,17 @@ class EscapeGameEngine {
 
         let isNewFloorAdvanced = false;
         if (!isGameOver && !isEnding) {
-            localStorage.setItem(this.saveKey, sceneKey);
+            this.setStoredValue(this.saveKey, sceneKey);
             if (!oldLastItem || oldLastItem.id !== nodeItem.id) {
                 if (oldLastItem) {
                     isNewFloorAdvanced = true;
                 }
                 this.routeHistory.push(nodeItem);
-                localStorage.setItem(this.historyKey, JSON.stringify(this.routeHistory));
+                this.setStoredValue(this.historyKey, JSON.stringify(this.routeHistory));
             }
-        } else if (isEnding) {
-            localStorage.setItem(this.saveKey, sceneKey);
+        } else {
+            // ゲームオーバー画面も保存し、再読み込み後に直前の場面へ戻らないようにする
+            this.setStoredValue(this.saveKey, sceneKey);
         }
 
         const textDisplay = document.getElementById(this.textDisplayId);
@@ -142,13 +188,15 @@ class EscapeGameEngine {
             statusBadge.innerHTML = '';
             const headerResetBtn = document.createElement('button');
             headerResetBtn.className = 'btn-small-reset';
+            headerResetBtn.type = 'button';
+            headerResetBtn.setAttribute('aria-label', 'セーブデータを削除して最初から');
             headerResetBtn.innerText = '最初から';
             headerResetBtn.onclick = () => {
                 if (confirm('最初からやり直しますか？（記録が削除されます）')) {
-                    localStorage.removeItem(this.saveKey);
-                    localStorage.removeItem(this.historyKey);
-                    localStorage.removeItem(this.checkpointKey);
-                    localStorage.removeItem(this.revealedKey);
+                    this.removeStoredValue(this.saveKey);
+                    this.removeStoredValue(this.historyKey);
+                    this.removeStoredValue(this.checkpointKey);
+                    this.removeStoredValue(this.revealedKey);
                     this.routeHistory = [];
                     this.currentCheckpoint = this.startSceneKey;
                     this.hasReachedF15 = false;
@@ -168,6 +216,7 @@ class EscapeGameEngine {
             scene.choices.forEach(choice => {
                 const button = document.createElement('button');
                 button.className = 'btn';
+                button.type = 'button';
                 button.innerText = choice.text;
                 button.onclick = () => {
                     if (this.isAnimating) return;
@@ -180,6 +229,7 @@ class EscapeGameEngine {
 
             const checkpointBtn = document.createElement('button');
             checkpointBtn.className = 'btn btn-retry';
+            checkpointBtn.type = 'button';
             checkpointBtn.innerText = 'リトライする';
             checkpointBtn.onclick = () => {
                 if (this.isAnimating) return;
@@ -197,6 +247,11 @@ class EscapeGameEngine {
         }
 
         this.renderRouteMap(nodeItem.id, isGameOver, useTransition && isNewFloorAdvanced, isEnding);
+
+        const firstAction = choiceDisplay.querySelector('button');
+        if (firstAction) {
+            firstAction.focus({ preventScroll: true });
+        }
     }
 
     renderRouteMap(currentNodeId, isGameOver, animateAdvance = false, isEnding = false) {
@@ -280,7 +335,7 @@ class EscapeGameEngine {
         }
 
         // 3. 【下】過去の履歴（生還時は履歴の末尾＝直前の階層を含め、それ以前を過去履歴として描画）
-        const historyStartIndex = isEnding ? displayList.length - 2 : displayList.length - 2;
+        const historyStartIndex = isEnding ? displayList.length - 1 : displayList.length - 2;
         for (let i = historyStartIndex; i >= 0; i--) {
             const histItem = displayList[i];
             const histSceneObj = this.storyData[histItem.id] || {};
@@ -299,10 +354,12 @@ class EscapeGameEngine {
             const floorItem = document.createElement('div');
             floorItem.className = `route-floor-item ${item.className}`;
             floorItem.dataset.id = item.id;
-            floorItem.innerHTML = `
-                <div class="floor-dot"></div>
-                <div class="floor-label">${item.name}</div>
-            `;
+            const floorDot = document.createElement('div');
+            floorDot.className = 'floor-dot';
+            const floorLabel = document.createElement('div');
+            floorLabel.className = 'floor-label';
+            floorLabel.textContent = item.name;
+            floorItem.append(floorDot, floorLabel);
             scrollLayer.appendChild(floorItem);
 
             if (index < itemsToRender.length - 1) {
@@ -350,10 +407,12 @@ class EscapeGameEngine {
                         let finalClass = isGameOver ? 'floor-current floor-dead' : 'floor-current';
 
                         targetItem.className = `route-floor-item ${finalClass}`;
-                        targetItem.innerHTML = `
-                            <div class="floor-dot"></div>
-                            <div class="floor-label">${resolvedNode.name}（現在地）</div>
-                        `;
+                        const floorDot = document.createElement('div');
+                        floorDot.className = 'floor-dot';
+                        const floorLabel = document.createElement('div');
+                        floorLabel.className = 'floor-label';
+                        floorLabel.textContent = `${resolvedNode.name}（現在地）`;
+                        targetItem.replaceChildren(floorDot, floorLabel);
 
                         const connectors = scrollLayer.querySelectorAll('.floor-connector');
                         if (connectors.length > 0) {
@@ -378,10 +437,12 @@ class EscapeGameEngine {
                     let finalClass = isGameOver ? 'floor-current floor-dead' : 'floor-current';
 
                     targetItem.className = `route-floor-item ${finalClass}`;
-                    targetItem.innerHTML = `
-                        <div class="floor-dot"></div>
-                        <div class="floor-label">${resolvedNode.name}（現在地）</div>
-                    `;
+                    const floorDot = document.createElement('div');
+                    floorDot.className = 'floor-dot';
+                    const floorLabel = document.createElement('div');
+                    floorLabel.className = 'floor-label';
+                    floorLabel.textContent = `${resolvedNode.name}（現在地）`;
+                    targetItem.replaceChildren(floorDot, floorLabel);
 
                     const connectors = scrollLayer.querySelectorAll('.floor-connector');
                     if (connectors.length > 0) {

@@ -1,0 +1,25 @@
+name: Validate game
+
+on:
+  push:
+    branches: [main, "quality/**"]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Check JavaScript syntax
+        run: npm run check:syntax
+      - name: Validate story graph and scene data
+        run: npm test
