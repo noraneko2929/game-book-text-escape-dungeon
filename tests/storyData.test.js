@@ -211,7 +211,7 @@ test('floor 13 lever is concealed and described consistently as a magical seal',
 test('floor 17 rope distraction explains how the rope reaches beyond the gate', () => {
     const story = loadStory();
     assert.ok(story.f17_p3.text.includes('柱に当たって'));
-    assert.ok(story.f17_p3.text.includes('手繰り寄せる'), 'the rope must be recoverable from the far side of the gate');
+    assert.ok(story.f17_p3.choices[0].text.includes('手繰り寄せる'), 'the rope must be recoverable from the far side of the gate');
     assert.ok(story.f17_p3.text.includes('門の向こう'));
 });
 
