@@ -163,11 +163,7 @@ const storyData = {
    ]
  },  
   
- gameover_crushed: {  
-   text: "<span class='danger-text'>【ゲームオーバー：崩落】</span>\n\n頭上で鈍い音が重なった。逃げる間もなく岩盤が崩れ、視界も呼吸も土砂に塞がれた……。",  
-   status: "死亡",  
-   choices: []  
- },  
+  
   
  f18_p3: {  
    text: "最後の石が踵をかすめた。狭い穴へ転がり込み、ようやく息をつく。壁の割れ目から、かすかな風が頬を撫でた。",  
