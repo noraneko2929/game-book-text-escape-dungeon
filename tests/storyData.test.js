@@ -73,7 +73,7 @@ test('story avoids prohibited terminology and obvious editing artifacts', () => 
     const story = loadStory();
     for (const [key, scene] of Object.entries(story)) {
         assert.ok(!scene.status.includes('深層'), `${key}: prohibited floor terminology`);
-        assert.ok(!scene.text.includes('登 the'), `${key}: stray editing artifact`);
+            assert.ok(!scene.text.includes('\\n'), key + ': must not contain a literal backslash-n');
         for (const choice of scene.choices) {
             assert.ok(!choice.text.includes('登 the'), `${key}: stray editing artifact in choice`);
         }
@@ -116,8 +116,8 @@ test('ending and danger scene line breaks are real newlines, not visible escape 
     const story = loadStory();
     for (const [key, scene] of Object.entries(story)) {
         if (key.startsWith('gameover_') || key.includes('_pinch_')) {
-            assert.ok(!scene.text.includes('\\n'), \`\${key}: must not contain a literal backslash-n\`);
-            assert.ok(scene.text.includes('\n\n'), \`\${key}: expected a blank line after the heading\`);
+            assert.ok(!scene.text.includes('\\n'), key + ': must not contain a literal backslash-n');
+            assert.ok(scene.text.includes('\n\n'), key + ': expected a blank line after the heading');
         }
     }
 });
