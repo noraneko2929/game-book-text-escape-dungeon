@@ -107,7 +107,7 @@ const storyData = {
    ] },  
   
  gameover_f19_shelf: {
-   text: "<span class='danger-text'>【ゲームオーバー：崖下の岩棚】</span>\\n\\n足場に見えた岩棚は、崩れかけた岩の張り出しだった。体重をかけた瞬間、岩が砕けて闇へ落ちた……。",
+   text: "<span class='danger-text'>【ゲームオーバー：崖下の岩棚】</span>\n\n足場に見えた岩棚は、崩れかけた岩の張り出しだった。体重をかけた瞬間、岩が砕けて闇へ落ちた……。",
    status: "死亡",
    choices: []
  },
@@ -156,7 +156,7 @@ const storyData = {
    ] },
 
  f18_pinch_wait: {
-   text: "<span class='danger-text'>【窮地：落石の合間】</span>\\n\\n大岩が通り過ぎるたび、短い静寂が訪れる。息を潜めて待つと、石の音が少しずつ遠のいた。",
+   text: "<span class='danger-text'>【窮地：落石の合間】</span>\n\n大岩が通り過ぎるたび、短い静寂が訪れる。息を潜めて待つと、石の音が少しずつ遠のいた。",
    status: "未知の地底（落石の合間）",
    choices: [
      { text: "落石が弱まった隙に、岩陰を伝って斜面を渡る", next: "f18_p3" }
