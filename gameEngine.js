@@ -16,11 +16,40 @@ class EscapeGameEngine {
         this.checkpointKey = baseKey + '_checkpoint';
         this.revealedKey = baseKey + '_revealed';
         this.isAnimating = false;
+        this.memoryStorage = new Map();
+    }
+
+    getStoredValue(key) {
+        try {
+            const value = localStorage.getItem(key);
+            return value === null ? this.memoryStorage.get(key) ?? null : value;
+        } catch (error) {
+            return this.memoryStorage.get(key) ?? null;
+        }
+    }
+
+    setStoredValue(key, value) {
+        const normalizedValue = String(value);
+        this.memoryStorage.set(key, normalizedValue);
+        try {
+            localStorage.setItem(key, normalizedValue);
+        } catch (error) {
+            console.warn('Persistent storage is unavailable; progress will last only for this session.', error);
+        }
+    }
+
+    removeStoredValue(key) {
+        this.memoryStorage.delete(key);
+        try {
+            localStorage.removeItem(key);
+        } catch (error) {
+            console.warn('Could not remove persistent save data.', error);
+        }
     }
 
     init() {
         try {
-            const savedHistory = JSON.parse(localStorage.getItem(this.historyKey) || '[]');
+            const savedHistory = JSON.parse(this.getStoredValue(this.historyKey) || '[]');
             this.routeHistory = Array.isArray(savedHistory)
                 ? savedHistory.filter(item =>
                     item &&
@@ -31,15 +60,15 @@ class EscapeGameEngine {
         } catch (error) {
             console.warn('Invalid route history was discarded.', error);
             this.routeHistory = [];
-            localStorage.removeItem(this.historyKey);
+            this.removeStoredValue(this.historyKey);
         }
-        const storedCheckpoint = localStorage.getItem(this.checkpointKey);
+        const storedCheckpoint = this.getStoredValue(this.checkpointKey);
         this.currentCheckpoint = (storedCheckpoint && this.storyData[storedCheckpoint])
             ? storedCheckpoint
             : this.startSceneKey;
-        this.hasReachedF15 = localStorage.getItem(this.revealedKey) === 'true';
+        this.hasReachedF15 = this.getStoredValue(this.revealedKey) === 'true';
         
-        const savedScene = localStorage.getItem(this.saveKey);
+        const savedScene = this.getStoredValue(this.saveKey);
         const targetScene = (savedScene && this.storyData[savedScene]) ? savedScene : this.currentCheckpoint;
 
         this.renderScene(targetScene, false);
@@ -89,7 +118,7 @@ class EscapeGameEngine {
             const floorNum = parseInt(match[1], 10);
             if (floorNum <= 15) {
                 this.hasReachedF15 = true;
-                localStorage.setItem(this.revealedKey, 'true');
+                this.setStoredValue(this.revealedKey, 'true');
             }
         }
 
@@ -104,7 +133,7 @@ class EscapeGameEngine {
 
         if (newCheckpoint) {
             this.currentCheckpoint = newCheckpoint;
-            localStorage.setItem(this.checkpointKey, this.currentCheckpoint);
+            this.setStoredValue(this.checkpointKey, this.currentCheckpoint);
         }
     }
 
@@ -119,7 +148,7 @@ class EscapeGameEngine {
         } else {
             this.routeHistory = [targetItem];
         }
-        localStorage.setItem(this.historyKey, JSON.stringify(this.routeHistory));
+        this.setStoredValue(this.historyKey, JSON.stringify(this.routeHistory));
     }
 
     renderScene(sceneKey, useTransition = true) {
@@ -138,17 +167,17 @@ class EscapeGameEngine {
 
         let isNewFloorAdvanced = false;
         if (!isGameOver && !isEnding) {
-            localStorage.setItem(this.saveKey, sceneKey);
+            this.setStoredValue(this.saveKey, sceneKey);
             if (!oldLastItem || oldLastItem.id !== nodeItem.id) {
                 if (oldLastItem) {
                     isNewFloorAdvanced = true;
                 }
                 this.routeHistory.push(nodeItem);
-                localStorage.setItem(this.historyKey, JSON.stringify(this.routeHistory));
+                this.setStoredValue(this.historyKey, JSON.stringify(this.routeHistory));
             }
         } else {
             // ゲームオーバー画面も保存し、再読み込み後に直前の場面へ戻らないようにする
-            localStorage.setItem(this.saveKey, sceneKey);
+            this.setStoredValue(this.saveKey, sceneKey);
         }
 
         const textDisplay = document.getElementById(this.textDisplayId);
@@ -159,13 +188,15 @@ class EscapeGameEngine {
             statusBadge.innerHTML = '';
             const headerResetBtn = document.createElement('button');
             headerResetBtn.className = 'btn-small-reset';
+            headerResetBtn.type = 'button';
+            headerResetBtn.setAttribute('aria-label', 'セーブデータを削除して最初から');
             headerResetBtn.innerText = '最初から';
             headerResetBtn.onclick = () => {
                 if (confirm('最初からやり直しますか？（記録が削除されます）')) {
-                    localStorage.removeItem(this.saveKey);
-                    localStorage.removeItem(this.historyKey);
-                    localStorage.removeItem(this.checkpointKey);
-                    localStorage.removeItem(this.revealedKey);
+                    this.removeStoredValue(this.saveKey);
+                    this.removeStoredValue(this.historyKey);
+                    this.removeStoredValue(this.checkpointKey);
+                    this.removeStoredValue(this.revealedKey);
                     this.routeHistory = [];
                     this.currentCheckpoint = this.startSceneKey;
                     this.hasReachedF15 = false;
@@ -185,6 +216,7 @@ class EscapeGameEngine {
             scene.choices.forEach(choice => {
                 const button = document.createElement('button');
                 button.className = 'btn';
+                button.type = 'button';
                 button.innerText = choice.text;
                 button.onclick = () => {
                     if (this.isAnimating) return;
@@ -197,6 +229,7 @@ class EscapeGameEngine {
 
             const checkpointBtn = document.createElement('button');
             checkpointBtn.className = 'btn btn-retry';
+            checkpointBtn.type = 'button';
             checkpointBtn.innerText = 'リトライする';
             checkpointBtn.onclick = () => {
                 if (this.isAnimating) return;
@@ -214,6 +247,11 @@ class EscapeGameEngine {
         }
 
         this.renderRouteMap(nodeItem.id, isGameOver, useTransition && isNewFloorAdvanced, isEnding);
+
+        const firstAction = choiceDisplay.querySelector('button');
+        if (firstAction) {
+            firstAction.focus({ preventScroll: true });
+        }
     }
 
     renderRouteMap(currentNodeId, isGameOver, animateAdvance = false, isEnding = false) {
