@@ -214,7 +214,7 @@ test('non-ending scene text remains within the 90-character mobile guideline', (
     const story = loadStory();
     for (const [key, scene] of Object.entries(story)) {
         if (!key.startsWith('gameover_')) {
-            const visibleText = scene.text.replace(/<[^>]*>/g, '').replace(/\\s/g, '');
+            const visibleText = scene.text.replace(/<[^>]*>/g, '').replace(/\s/g, '');
             assert.ok(visibleText.length <= 90, `${key}: ${visibleText.length} characters`);
         }
     }
