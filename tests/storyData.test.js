@@ -84,7 +84,7 @@ test('story avoids prohibited terminology and obvious editing artifacts', () => 
 test('story pages stay concise and the added recovery beats remain reachable', () => {
     const story = loadStory();
     for (const [key, scene] of Object.entries(story)) {
-        const visibleText = scene.text.replace(/<[^>]*>/g, '').replace(/\\s/g, '');
+        const visibleText = scene.text.replace(/<[^>]*>/g, '').replace(/\s/g, '');
         if (!key.startsWith('gameover_')) {
             assert.ok(visibleText.length <= 90, `${key}: page text should stay within 90 characters`);
         }
