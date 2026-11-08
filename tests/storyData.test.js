@@ -193,6 +193,7 @@ test('floor 18 dangerous crystal and rockfall provide observable clues', () => {
     assert.ok(story.f18_p2.text.includes('一定の間隔'));
     assert.equal(story.f18_p2.choices[0].next, 'f18_pinch_wait');
     assert.equal(story.f18_pinch_wait.choices[0].next, 'f18_p3');
+    assert.equal(story.gameover_crushed, undefined, 'the obsolete unreachable rockfall ending must be removed');
 });
 
 test('floor 13 lever is concealed and described consistently as a magical seal', () => {
