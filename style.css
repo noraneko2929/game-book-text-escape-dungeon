@@ -286,3 +286,59 @@ body {
         padding: 10px 14px;
     }
 }
+
+
+/* 操作性・アクセシビリティ */
+button {
+    font: inherit;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.btn:focus-visible,
+.btn-small-reset:focus-visible {
+    outline: 3px solid #9bd6ff;
+    outline-offset: 3px;
+    border-color: #9bd6ff;
+}
+
+.btn:active {
+    transform: translateY(1px);
+}
+
+.route-map-container {
+    overscroll-behavior: contain;
+}
+
+.text-area {
+    overflow-wrap: anywhere;
+}
+
+@media (max-width: 480px) {
+    body {
+        padding:
+            max(4px, env(safe-area-inset-top))
+            max(4px, env(safe-area-inset-right))
+            max(4px, env(safe-area-inset-bottom))
+            max(4px, env(safe-area-inset-left));
+    }
+
+    .game-container {
+        min-height: calc(100svh - 8px);
+    }
+
+    .btn {
+        min-height: 52px;
+        line-height: 1.5;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        scroll-behavior: auto !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
