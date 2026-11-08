@@ -33,7 +33,10 @@ class EscapeGameEngine {
             this.routeHistory = [];
             localStorage.removeItem(this.historyKey);
         }
-        this.currentCheckpoint = localStorage.getItem(this.checkpointKey) || this.startSceneKey;
+        const storedCheckpoint = localStorage.getItem(this.checkpointKey);
+        this.currentCheckpoint = (storedCheckpoint && this.storyData[storedCheckpoint])
+            ? storedCheckpoint
+            : this.startSceneKey;
         this.hasReachedF15 = localStorage.getItem(this.revealedKey) === 'true';
         
         const savedScene = localStorage.getItem(this.saveKey);
