@@ -122,6 +122,36 @@ test('ending and danger scene line breaks are real newlines, not visible escape 
     }
 });
 
+test('floor 15 reveal and wraith encounter are separated into distinct pages', () => {
+    const story = loadStory();
+    assert.ok(story.f15_p1.choices.some(choice => choice.next === 'f15_p1b'));
+    assert.ok(story.f15_p1b, 'the wraith encounter setup page must exist');
+    assert.ok(story.f15_p1b.text.includes('白い靄'));
+    assert.ok(story.f15_p1b.text.includes('人影'));
+});
+
+test('the opening uses a hidden passage and vertical shaft rather than a cave-in', () => {
+    const story = loadStory();
+    assert.ok(story.start.text.includes('隠し通路'));
+    assert.ok(story.start.text.includes('縦穴'));
+    assert.ok(!story.start.text.includes('崩落に巻き込まれ'));
+});
+
+test('upper underground floors do not prematurely suggest the surface', () => {
+    const story = loadStory();
+    for (const key of ['f2_p1', 'f3_p1', 'f5_p1', 'f6_p1', 'f6_p2']) {
+        assert.ok(!/太陽|木の葉|外の空気|地上が近い|外へ出たい/.test(story[key].text), key + ': surface cues appear too early');
+    }
+});
+
+test('floor 13 uses an ancient stone mechanism rather than a modern control panel', () => {
+    const story = loadStory();
+    for (const key of ['f13_p1', 'f13_pinch_gate', 'f13_p2', 'f13_p3']) {
+        assert.ok(!/鉄格子|制御盤|非常用/.test(story[key].text), key + ': modern / mismatched mechanism terminology');
+        assert.ok(!/鉄格子|制御盤|非常用/.test(story[key].choices.map(choice => choice.text).join(' ')), key + ': outdated choice terminology');
+    }
+});
+
 test('scene narration does not reveal the selected route or repeat the choice action', () => {
     const story = loadStory();
     assert.ok(!story.f19_p1.text.includes('風の音だけを頼りに進む'));
