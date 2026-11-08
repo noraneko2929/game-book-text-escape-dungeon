@@ -130,6 +130,16 @@ test('floor 15 reveal and wraith encounter are separated into distinct pages', (
     assert.ok(story.f15_p1b.text.includes('人影'));
 });
 
+test('floor 15 keeps the encounter within the dungeon demon theme', () => {
+    const story = loadStory();
+    assert.ok(story.f15_p1b.text.includes('悪魔') || story.f15_p1b.text.includes('爪痕'));
+    assert.ok(story.f15_p1b.text.includes('封魔紋'));
+    assert.ok(story.f15_pinch_demon, 'the demon encounter danger scene must exist');
+    assert.ok(story.gameover_demon_abyss, 'the demon ending must exist');
+    assert.ok(!Object.keys(story).some(key => /wraith/i.test(key)));
+    assert.ok(!Object.values(story).some(scene => /レイス|亡霊/.test(scene.text + scene.status)));
+});
+
 test('the opening uses a hidden passage and vertical shaft rather than a cave-in', () => {
     const story = loadStory();
     assert.ok(story.start.text.includes('隠し通路'));
