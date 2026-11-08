@@ -73,7 +73,7 @@ test('story avoids prohibited terminology and obvious editing artifacts', () => 
     const story = loadStory();
     for (const [key, scene] of Object.entries(story)) {
         assert.ok(!scene.status.includes('深層'), `${key}: prohibited floor terminology`);
-        assert.ok(!scene.text.includes('登 the'), `${key}: stray editing artifact`);
+            assert.ok(!scene.text.includes('\\n'), key + ': must not contain a literal backslash-n');
         for (const choice of scene.choices) {
             assert.ok(!choice.text.includes('登 the'), `${key}: stray editing artifact in choice`);
         }
@@ -109,4 +109,25 @@ test('key action choices have separate result scenes and the opening explains th
     assert.equal(story.f14_p2.choices.find(choice => choice.next === 'f14_p3')?.text.includes('泥'), true);
     assert.equal(story.f13_p2.choices[0].next, 'f13_p3');
     assert.ok(story.start.text.includes('駆け出しの冒険者'));
+});
+
+
+test('ending and danger scene line breaks are real newlines, not visible escape sequences', () => {
+    const story = loadStory();
+    for (const [key, scene] of Object.entries(story)) {
+        if (key.startsWith('gameover_') || key.includes('_pinch_')) {
+            assert.ok(!scene.text.includes('\\n'), key + ': must not contain a literal backslash-n');
+            assert.ok(scene.text.includes('\n\n'), key + ': expected a blank line after the heading');
+        }
+    }
+});
+
+test('scene narration does not reveal the selected route or repeat the choice action', () => {
+    const story = loadStory();
+    assert.ok(!story.f19_p1.text.includes('風の音だけを頼りに進む'));
+    assert.ok(!story.f7_p1.text.includes('こんな場所に、知っている人がいるはずがない'));
+    assert.ok(!story.f8_p1.choices.some(choice => choice.text.includes('安全ルート')));
+    assert.ok(!story.f16_p1.text.includes('待つ'));
+    assert.ok(!story.f18_p2.text.includes('周期をうかがう'));
+    assert.ok(!story.f12_p1.text.includes('目を凝らす'));
 });

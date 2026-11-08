@@ -24,13 +24,13 @@ const storyData = {
  },  
   
  gameover_f21_fall: {  
-   text: "<span class='danger-text'>【ゲームオーバー：奈落への滑落】</span>\\n\\n足元はなかった。手を伸ばしても、指先が触れるのは冷たい空気だけ。叫びは闇に吸い込まれ、身体は底の見えない穴へ消えていった……。",  
+   text: "<span class='danger-text'>【ゲームオーバー：奈落への滑落】</span>\n\n足元はなかった。手を伸ばしても、指先が触れるのは冷たい空気だけ。叫びは闇に吸い込まれ、身体は底の見えない穴へ消えていった……。",  
    status: "死亡（最深部より下）",  
    choices: []  
  },  
   
  gameover_abyss_drop: {  
-   text: "<span class='danger-text'>【ゲームオーバー：魔界溜まり】</span>\\n\\n亀裂の奥から粘つくものが腕に絡みつく。振りほどく間もなく、身体ごと暗い泥の底へ引きずり込まれた……。",  
+   text: "<span class='danger-text'>【ゲームオーバー：魔界溜まり】</span>\n\n亀裂の奥から粘つくものが腕に絡みつく。振りほどく間もなく、身体ごと暗い泥の底へ引きずり込まれた……。",  
    status: "死亡",  
    choices: []  
  },  
@@ -46,7 +46,7 @@ const storyData = {
  },  
   
  gameover_abyss_eat: {  
-   text: "<span class='danger-text'>【ゲームオーバー：悪魔に感知される】</span>\\n\\n足跡を追った先で、影がゆっくり振り返った。逃げようとした瞬間、視界が黒い爪に覆われた……。",  
+   text: "<span class='danger-text'>【ゲームオーバー：悪魔に感知される】</span>\n\n足跡を追った先で、影がゆっくり振り返った。逃げようとした瞬間、視界が黒い爪に覆われた……。",  
    status: "死亡",  
    choices: []  
  },  
@@ -70,20 +70,20 @@ const storyData = {
 
   
  gameover_gas_choke: {  
-   text: "<span class='danger-text'>【ゲームオーバー：毒霧】</span>\\n\\n息が続かなかった。ひと吸いしただけで喉が焼け、胸の奥に熱い痛みが広がる。膝から崩れ落ちた……。",  
+   text: "<span class='danger-text'>【ゲームオーバー：毒霧】</span>\n\n息が続かなかった。ひと吸いしただけで喉が焼け、胸の奥に熱い痛みが広がる。膝から崩れ落ちた……。",  
    status: "死亡",  
    choices: []  
  },  
   
  gameover_gas_melt: {  
-   text: "<span class='danger-text'>【ゲームオーバー：毒霧の停滞】</span>\\n\\n霧は薄くならない。肌が焼けるように痛み、指先の感覚が消えていく。逃げる力も残っていなかった……。",  
+   text: "<span class='danger-text'>【ゲームオーバー：毒霧の停滞】</span>\n\n霧は薄くならない。肌が焼けるように痛み、指先の感覚が消えていく。逃げる力も残っていなかった……。",  
    status: "死亡",  
    choices: []  
  },  
   
  // --- 未踏域・次段階 ---  
  f19_p1: {  
-   text: "布越しの息が熱い。細い通路の先で道が分かれていた。片方から風が吹き、もう片方は不自然なほど静かだ。風の音だけを頼りに進む。",  
+   text: "布越しの息が熱い。細い通路の先で道が二つに分かれていた。左から風が吹き、右は不自然なほど静かだ。暗くて先は見通せない。",  
    status: "未知の地底回廊（分岐点）",  
    choices: [  
      { text: "右の静寂に満ちた通路へ進む", next: "gameover_mimic_cave" },  
@@ -92,7 +92,7 @@ const storyData = {
  },  
   
  gameover_mimic_cave: {  
-   text: "<span class='danger-text'>【ゲームオーバー：擬態する洞窟】</span>\\n\\n静かな穴に足を踏み入れた途端、壁だと思っていたものが閉じた。そこは洞窟ではない。巨大な口の中だった……。",  
+   text: "<span class='danger-text'>【ゲームオーバー：擬態する洞窟】</span>\n\n静かな穴に足を踏み入れた途端、壁だと思っていたものが閉じた。そこは洞窟ではない。巨大な口の中だった……。",  
    status: "死亡",  
    choices: []  
  },  
@@ -107,7 +107,7 @@ const storyData = {
    ] },  
   
  gameover_fall_abyss: {  
-   text: "<span class='danger-text'>【ゲームオーバー：断崖から転落】</span>\\n\\n蹴った石が砕けた。身体が宙に浮き、指先は何もつかめない。闇の底へ落ちていった……。",  
+   text: "<span class='danger-text'>【ゲームオーバー：断崖から転落】</span>\n\n蹴った石が砕けた。身体が宙に浮き、指先は何もつかめない。闇の底へ落ちていった……。",  
    status: "死亡",  
    choices: []  
  },  
@@ -121,7 +121,7 @@ const storyData = {
    ] },  
   
  gameover_demon_notice: {  
-   text: "<span class='danger-text'>【ゲームオーバー：巡回する眷属】</span>\\n\\n投げた石が近くで跳ねた。足音が止まり、闇の中の目がこちらを向く。逃げる前に、鋭い爪が迫った……。",  
+   text: "<span class='danger-text'>【ゲームオーバー：巡回する眷属】</span>\n\n投げた石が近くで跳ねた。足音が止まり、闇の中の目がこちらを向く。逃げる前に、鋭い爪が迫った……。",  
    status: "死亡",  
    choices: []  
  },  
@@ -136,13 +136,13 @@ const storyData = {
    ] },  
   
  gameover_crystal_blast: {  
-   text: "<span class='danger-text'>【ゲームオーバー：結晶の爆発】</span>\\n\\n水晶に触れた瞬間、耳を裂く音がした。紫の光が視界を埋め、洞窟全体が弾け飛んだ……。",  
+   text: "<span class='danger-text'>【ゲームオーバー：結晶の爆発】</span>\n\n水晶に触れた瞬間、耳を裂く音がした。紫の光が視界を埋め、洞窟全体が弾け飛んだ……。",  
    status: "死亡",  
    choices: []  
  },  
   
  f18_p2: {
-   text: "斜面の上から石が転がり落ちてくる。止まる気配はない。岩陰から周期をうかがう。次の一歩を間違えれば、押し潰される。",
+   text: "斜面の上から石が転がり落ちてくる。止まる気配はない。岩陰に身を寄せる。次の一歩を間違えれば、押し潰される。",
    status: "未知の地底（ガレ場）",
    choices: [
      { text: "落石が止まるまでガレ場の麓で一晩待つ", next: "gameover_crushed" },
@@ -150,7 +150,7 @@ const storyData = {
    ] },  
   
  gameover_crushed: {  
-   text: "<span class='danger-text'>【ゲームオーバー：崩落】</span>\\n\\n頭上で鈍い音が重なった。逃げる間もなく岩盤が崩れ、視界も呼吸も土砂に塞がれた……。",  
+   text: "<span class='danger-text'>【ゲームオーバー：崩落】</span>\n\n頭上で鈍い音が重なった。逃げる間もなく岩盤が崩れ、視界も呼吸も土砂に塞がれた……。",  
    status: "死亡",  
    choices: []  
  },  
@@ -182,7 +182,7 @@ const storyData = {
  },  
   
  gameover_dog_burn: {  
-   text: "<span class='danger-text'>【ゲームオーバー：番犬の炎】</span>\\n\\n門へ駆け出した瞬間、青い炎が通路を満たした。熱さを感じるより早く、意識が途切れた……。",  
+   text: "<span class='danger-text'>【ゲームオーバー：番犬の炎】</span>\n\n門へ駆け出した瞬間、青い炎が通路を満たした。熱さを感じるより早く、意識が途切れた……。",  
    status: "死亡",  
    choices: []  
  },  
@@ -197,7 +197,7 @@ const storyData = {
   
  // --- 境界エリア ---  
  f16_p1: {  
-   text: "黒い鎖が壁から這い出し、通路を塞いでいた。触れた岩が音もなく崩れる。鎖の動きが止まる一瞬を待つ。手のひらが汗で滑った。",  
+   text: "黒い鎖が壁から這い出し、通路を塞いでいた。触れた岩が音もなく崩れる。鎖の表面に、鈍い光が走る。手のひらが汗で滑った。",  
    status: "未知の地底（黒い鎖の通路）",  
    choices: [  
      { text: "足元の石片で鎖の根元を叩こうとする", next: "gameover_chain_curse" },  
@@ -206,7 +206,7 @@ const storyData = {
  },  
   
  gameover_chain_curse: {  
-   text: "<span class='danger-text'>【ゲームオーバー：黒い鎖】</span>\\n\\n石片が鎖に触れた。黒い紋様が脈打ち、冷たさが腕を伝って胸に広がる。息が止まった……。",  
+   text: "<span class='danger-text'>【ゲームオーバー：黒い鎖】</span>\n\n石片が鎖に触れた。黒い紋様が脈打ち、冷たさが腕を伝って胸に広がる。息が止まった……。",  
    status: "死亡",  
    choices: []  
  },  
@@ -231,7 +231,7 @@ const storyData = {
  },
  
  f16_pinch_shaft: {
-   text: "<span class='danger-text'>【窮地：崩れた縦穴】</span>\\n\\n足をかけた岩棚が崩れた。腕を強く打ち、息が詰まる。下から鎖の擦れる音が近づいてくる。",
+   text: "<span class='danger-text'>【窮地：崩れた縦穴】</span>\n\n足をかけた岩棚が崩れた。腕を強く打ち、息が詰まる。下から鎖の擦れる音が近づいてくる。",
    status: "未知の地底（縦穴で負傷）",
    choices: [
      { text: "痛む腕をかばい、崩れた縁をよじ戻る", next: "f15_p1" },
@@ -240,7 +240,7 @@ const storyData = {
  },
  
  gameover_f16_shaft: {
-   text: "<span class='danger-text'>【ゲームオーバー：縦穴の底】</span>\\n\\n暗闇の底から鎖が伸びてきた。岩をつかむ指が滑り、身体は黒い影に呑まれた……。",
+   text: "<span class='danger-text'>【ゲームオーバー：縦穴の底】</span>\n\n暗闇の底から鎖が伸びてきた。岩をつかむ指が滑り、身体は黒い影に呑まれた……。",
    status: "死亡",
    choices: []
  },
@@ -257,7 +257,7 @@ const storyData = {
    ] },  
   
  f15_pinch_wraith: {  
-   text: "<span class='danger-text'>【窮地：レイスの囁き】</span>\\n\\n声を上げた瞬間、冷気が頭の中へ流れ込んだ。誰かの泣き声が自分の記憶に重なる。足元が揺れ、意識が遠のく。",  
+   text: "<span class='danger-text'>【窮地：レイスの囁き】</span>\n\n声を上げた瞬間、冷気が頭の中へ流れ込んだ。誰かの泣き声が自分の記憶に重なる。足元が揺れ、意識が遠のく。",  
    status: "中層・第15階層（精神混濁）",  
    choices: [  
      { text: "必死に歯を食いしばり、壁の聖印まで這い戻る", next: "f15_p2" },  
@@ -266,7 +266,7 @@ const storyData = {
  },  
   
  gameover_wraith_abyss: {  
-   text: "<span class='danger-text'>【ゲームオーバー：精神の崩壊】</span>\\n\\nもう自分の声も聞こえない。足元の階段を踏み外し、闇の奥へ落ちていった……。",  
+   text: "<span class='danger-text'>【ゲームオーバー：精神の崩壊】</span>\n\nもう自分の声も聞こえない。足元の階段を踏み外し、闇の奥へ落ちていった……。",  
    status: "死亡",  
    choices: []  
  },  
@@ -280,7 +280,7 @@ const storyData = {
    ] },  
   
  f15_pinch_cavein: {  
-   text: "<span class='danger-text'>【窮地：崩落】</span>\\n\\n岩が崩れ、左足が挟まれた。痛みで声が漏れる。遠くから、小さな爪が石を引っかく音が近づいてくる。",  
+   text: "<span class='danger-text'>【窮地：崩落】</span>\n\n岩が崩れ、左足が挟まれた。痛みで声が漏れる。遠くから、小さな爪が石を引っかく音が近づいてくる。",  
    status: "中層・第15階層（岩に挟まれる）",  
    choices: [  
      { text: "折れた支柱の木片をテコにし、少しずつ岩を持ち上げる", next: "f14_p1" },  
@@ -289,7 +289,7 @@ const storyData = {
  },  
   
  gameover_crushed_15: {  
-   text: "<span class='danger-text'>【ゲームオーバー：二次崩落】</span>\\n\\n必死にもがいた拍子に、頭上の岩盤が割れた。逃げる場所はない。重い岩が身体を押し潰した……。",  
+   text: "<span class='danger-text'>【ゲームオーバー：二次崩落】</span>\n\n必死にもがいた拍子に、頭上の岩盤が割れた。逃げる場所はない。重い岩が身体を押し潰した……。",  
    status: "死亡",  
    choices: []  
  },  
@@ -303,7 +303,7 @@ const storyData = {
    ] },  
   
  f14_pinch_poison: {  
-   text: "<span class='danger-text'>【窮地：瘴気を吸い込む】</span>\\n\\n走ったせいで息が乱れた。肺の奥が焼ける。膝をついた先に、泥に半分埋もれた水筒が見えた。",  
+   text: "<span class='danger-text'>【窮地：瘴気を吸い込む】</span>\n\n走ったせいで息が乱れた。肺の奥が焼ける。膝をついた先に、泥に半分埋もれた水筒が見えた。",  
    status: "中層・第14階層（瘴気中毒）",  
    choices: [  
      { text: "水筒の水を飲み、風の通る縁へ這い出す", next: "f14_p2" },  
@@ -312,7 +312,7 @@ const storyData = {
  },  
   
  gameover_poison_choke: {  
-   text: "<span class='danger-text'>【ゲームオーバー：毒の浸食】</span>\\n\\n息をするたび胸が裂ける。視界が紫に沈み、指先から力が抜けた。もう一歩も進めなかった……。",  
+   text: "<span class='danger-text'>【ゲームオーバー：毒の浸食】</span>\n\n息をするたび胸が裂ける。視界が紫に沈み、指先から力が抜けた。もう一歩も進めなかった……。",  
    status: "死亡",  
    choices: []  
  },  
@@ -343,7 +343,7 @@ const storyData = {
 
   
  f14_pinch_imp: {
-   text: "<span class='danger-text'>【窮地：インプの包囲】</span>\\n\\n石が壁に当たり、群れが一斉に振り向いた。爪が脇腹を裂く。水路脇の鉄棚へ転がり込むと、傷口から血が流れていた。",
+   text: "<span class='danger-text'>【窮地：インプの包囲】</span>\n\n石が壁に当たり、群れが一斉に振り向いた。爪が脇腹を裂く。水路脇の鉄棚へ転がり込むと、傷口から血が流れていた。",
    status: "中層・第14階層（負傷・追撃）",
    choices: [
      { text: "沼の泥を傷口に押し当て、血の匂いを抑えて水路へ潜む", next: "f14_p4" },
@@ -351,13 +351,13 @@ const storyData = {
    ] },  
   
  gameover_imp_swarm: {  
-   text: "<span class='danger-text'>【ゲームオーバー：インプの群れ】</span>\\n\\n何度振り払っても、爪が途切れない。声を上げる力もなくなり、群れの影に呑まれた……。",  
+   text: "<span class='danger-text'>【ゲームオーバー：インプの群れ】</span>\n\n何度振り払っても、爪が途切れない。声を上げる力もなくなり、群れの影に呑まれた……。",  
    status: "死亡",  
    choices: []  
  },  
   
  f13_p1: {
-   text: "第13階層の鉄格子に青い火花が走る。取っ手に触れれば危ない。脇の制御盤には、非常用らしいレバーが残っていた。",
+   text: "第13階層の鉄格子に青い火花が走る。取っ手の周囲に青い火花が走る。脇の制御盤には、非常用らしいレバーが残っていた。",
    status: "中層・第13階層（封印の扉）",
    choices: [
      { text: "力任せに鉄格子をこじ開けようとする", next: "f13_pinch_gate" },
@@ -365,7 +365,7 @@ const storyData = {
    ] },  
   
  f13_pinch_gate: {
-   text: "<span class='danger-text'>【窮地：防衛電流】</span>\\n\\n取っ手に触れた瞬間、青い火花が腕を走った。身体がしびれて動かない。奥から重い足音が響き始めた。",
+   text: "<span class='danger-text'>【窮地：防衛電流】</span>\n\n取っ手に触れた瞬間、青い火花が腕を走った。身体がしびれて動かない。奥から重い足音が響き始めた。",
    status: "中層・第13階層（感電）",
    choices: [
      { text: "しびれる体を引きずり、制御盤の非常用レバーを探す", next: "f13_p2" },
@@ -373,7 +373,7 @@ const storyData = {
    ] },  
   
  gameover_gate_13: {  
-   text: "<span class='danger-text'>【ゲームオーバー：防衛装置】</span>\\n\\nもう一度触れた瞬間、強い電流が胸を貫いた。視界が白く弾け、そのまま動かなくなった……。",  
+   text: "<span class='danger-text'>【ゲームオーバー：防衛装置】</span>\n\nもう一度触れた瞬間、強い電流が胸を貫いた。視界が白く弾け、そのまま動かなくなった……。",  
    status: "死亡",  
    choices: []  
  },  
@@ -395,7 +395,7 @@ const storyData = {
 
   
  f12_p1: {
-   text: "第12階層。床石に細い継ぎ目が走り、壁には小さな穴が並ぶ。罠だ。迂回路を探す時間はない。どの石が踏み板なのか、目を凝らす。",
+   text: "第12階層。床石に細い継ぎ目が走り、壁には小さな穴が並ぶ。罠だ。迂回路を探す時間はない。床の継ぎ目の奥で、かすかな金属音がした。",
    status: "中層・第12階層（罠の回廊）",
    choices: [
      { text: "継ぎ目と不自然な凹凸を見極め、安全な石を選んで進む", next: "f12_p2" },
@@ -403,7 +403,7 @@ const storyData = {
    ] },  
   
  f12_pinch_needle: {  
-   text: "<span class='danger-text'>【窮地：刺罠】</span>\\n\\n踏み板が沈み、鉄串が太ももをかすめた。天井の奥で歯車が回り始める。立ち止まれば、次は避けられない。",  
+   text: "<span class='danger-text'>【窮地：刺罠】</span>\n\n踏み板が沈み、鉄串が太ももをかすめた。天井の奥で歯車が回り始める。立ち止まれば、次は避けられない。",  
    status: "中層・第12階層（罠トラップ作動）",  
    choices: [  
      { text: "刺を抜くのは後にして、傷口を押さえながら横の排水溝へ滑り込む", next: "f12_p2" },  
@@ -412,7 +412,7 @@ const storyData = {
  },  
   
  gameover_needle_trap: {  
-   text: "<span class='danger-text'>【ゲームオーバー：鋸歯の罠】</span>\\n\\n頭上から鋸歯が落ちた。逃げ場はなかった。金属音が一度響き、静寂が戻った……。",  
+   text: "<span class='danger-text'>【ゲームオーバー：鋸歯の罠】</span>\n\n頭上から鋸歯が落ちた。逃げ場はなかった。金属音が一度響き、静寂が戻った……。",  
    status: "死亡",  
    choices: []  
  },  
@@ -443,7 +443,7 @@ const storyData = {
    ] },
  
  f11_pinch_stair: {
-   text: "<span class='danger-text'>【窮地：崩れた階段】</span>\\n\\n踏み板が抜け、足首をひねった。痛みで視界が滲む。手すり代わりの鉄輪に、かろうじて指がかかった。",
+   text: "<span class='danger-text'>【窮地：崩れた階段】</span>\n\n踏み板が抜け、足首をひねった。痛みで視界が滲む。手すり代わりの鉄輪に、かろうじて指がかかった。",
    status: "中層・第11階層（負傷）",
    choices: [
      { text: "鉄輪をつかみ、痛む足を引き寄せて這い上がる", next: "f10_p1" },
@@ -452,7 +452,7 @@ const storyData = {
  },
  
  gameover_f11_fall: {
-   text: "<span class='danger-text'>【ゲームオーバー：階段から転落】</span>\\n\\n指が鉄輪から滑った。何段も岩に身体を打ちつけ、暗い階段の底で動かなくなった……。",
+   text: "<span class='danger-text'>【ゲームオーバー：階段から転落】</span>\n\n指が鉄輪から滑った。何段も岩に身体を打ちつけ、暗い階段の底で動かなくなった……。",
    status: "死亡",
    choices: []
  },
@@ -477,7 +477,7 @@ const storyData = {
    ] },  
   
  f9_pinch_imp: {  
-   text: "<span class='danger-text'>【窮地：奇襲の失敗】</span>\\n\\n飛びかかった瞬間、インプが振り返った。爪が肩を裂く。悲鳴を上げられる前に逃げなければ。",  
+   text: "<span class='danger-text'>【窮地：奇襲の失敗】</span>\n\n飛びかかった瞬間、インプが振り返った。爪が肩を裂く。悲鳴を上げられる前に逃げなければ。",  
    status: "上層・第9階層（奇襲失敗）",  
    choices: [  
      { text: "傷口を押さえ、相手が仲間を集める前に脇の崩落坑道へ逃げ込む", next: "f8_p1" },  
@@ -486,7 +486,7 @@ const storyData = {
  },  
   
  gameover_imp_9: {  
-   text: "<span class='danger-text'>【ゲームオーバー：インプの反撃】</span>\\n\\n反撃を受けて倒れた。喉元に鋭い爪が迫り、声は途中で途切れた……。",  
+   text: "<span class='danger-text'>【ゲームオーバー：インプの反撃】</span>\n\n反撃を受けて倒れた。喉元に鋭い爪が迫り、声は途中で途切れた……。",  
    status: "死亡",  
    choices: []  
  },  
@@ -496,12 +496,12 @@ const storyData = {
    status: "上層・第8階層",  
    choices: [  
      { text: "早く地上に出たい一心で、近道に見える暗い横穴へ飛び込む", next: "f8_pinch_cavein" },  
-     { text: "壁のルート案内に従い、正規の安全ルートを辿って確実に進む", next: "f7_p1" }  
+     { text: "壁のルート案内を確かめ、その道筋をたどる", next: "f7_p1" }  
    ]  
  },  
   
  f8_pinch_cavein: {  
-   text: "<span class='danger-text'>【窮地：近道の崩落】</span>\\n\\n横穴へ入った途端、背後で岩が落ちた。出口が塞がれる。隙間から、かすかな風だけが流れてくる。",  
+   text: "<span class='danger-text'>【窮地：近道の崩落】</span>\n\n横穴へ入った途端、背後で岩が落ちた。出口が塞がれる。隙間から、かすかな風だけが流れてくる。",  
    status: "上層・第8階層（閉鎖空間）",  
    choices: [  
      { text: "擦り傷だらけになりながら風の通る隙間をしぶとく這い進む", next: "f7_p1" },  
@@ -510,13 +510,13 @@ const storyData = {
  },  
   
  gameover_cavein_8: {  
-   text: "<span class='danger-text'>【ゲームオーバー：閉じ込め】</span>\\n\\n岩を叩く音だけが響く。腕が動かなくなり、呼吸も浅くなる。暗闇の中で、風の音が遠のいた……。",  
+   text: "<span class='danger-text'>【ゲームオーバー：閉じ込め】</span>\n\n岩を叩く音だけが響く。腕が動かなくなり、呼吸も浅くなる。暗闇の中で、風の音が遠のいた……。",  
    status: "死亡",  
    choices: []  
  },  
   
  f7_p1: {  
-   text: "第7階層。誰かが名前を呼んだ気がした。懐かしい声。疲れがほどけ、そちらへ行きたくなる。違う。こんな場所に、知っている人がいるはずがない。",  
+   text: "第7階層。誰かが名前を呼んだ気がした。懐かしい声。疲れがほどけ、そちらへ行きたくなる。記憶の奥にしまった誰かの声によく似ていた。",  
    status: "上層・第7階層",  
    choices: [  
      { text: "心地よい声の主が気になり、思わずそちらへ顔を向けてしまう", next: "f7_pinch_succubus" },  
@@ -525,7 +525,7 @@ const storyData = {
  },  
   
  f7_pinch_succubus: {  
-   text: "<span class='danger-text'>【窮地：甘い囁き】</span>\\n\\n声が耳の奥に入り込む。帰りたい、誰かに会いたい。その気持ちだけが膨らみ、足が勝手に前へ出た。",  
+   text: "<span class='danger-text'>【窮地：甘い囁き】</span>\n\n声が耳の奥に入り込む。帰りたい、誰かに会いたい。その気持ちだけが膨らみ、足が勝手に前へ出た。",  
    status: "上層・第7階層（魅了直前）",  
    choices: [  
      { text: "唇を強く噛み、痛みで意識をつなぎ止めて正気を取り戻す", next: "f6_p1" },  
@@ -534,7 +534,7 @@ const storyData = {
  },  
   
  gameover_succubus_7: {  
-   text: "<span class='danger-text'>【ゲームオーバー：精気吸収】</span>\\n\\n差し出された手を握る。温かい。そう思った次の瞬間、身体から力が抜け、意識が遠のいた……。",  
+   text: "<span class='danger-text'>【ゲームオーバー：精気吸収】</span>\n\n差し出された手を握る。温かい。そう思った次の瞬間、身体から力が抜け、意識が遠のいた……。",  
    status: "死亡",  
    choices: []  
  },  
@@ -559,7 +559,7 @@ const storyData = {
  },
  
  f6_pinch_crack: {
-   text: "<span class='danger-text'>【窮地：崩れる岩棚】</span>\\n\\n割れ目に身体を押し込んだ瞬間、足元が崩れた。片足が宙に浮く。指先が岩の縁をつかんでいた。",
+   text: "<span class='danger-text'>【窮地：崩れる岩棚】</span>\n\n割れ目に身体を押し込んだ瞬間、足元が崩れた。片足が宙に浮く。指先が岩の縁をつかんでいた。",
    status: "上層・第6階層（滑落寸前）",
    choices: [
      { text: "岩の縁をつかみ、身体を少しずつ引き戻す", next: "f5_p1" },
@@ -568,7 +568,7 @@ const storyData = {
  },
  
  gameover_f6_crush: {
-   text: "<span class='danger-text'>【ゲームオーバー：岩棚の崩落】</span>\\n\\nつかんだ岩が砕けた。短い叫びは、落石の音にかき消された……。",
+   text: "<span class='danger-text'>【ゲームオーバー：岩棚の崩落】</span>\n\nつかんだ岩が砕けた。短い叫びは、落石の音にかき消された……。",
    status: "死亡",
    choices: []
  },
@@ -615,7 +615,7 @@ const storyData = {
  // 【エンディング】  
  // ====================================================  
  escape_true: {  
-   text: "<span class='success-text'>【生還：極限からの生還】</span>\\n\\n光が目に刺さる。土の上に倒れ込み、何度も息を吸った。生きている。それだけで、涙が止まらなかった。",  
+   text: "<span class='success-text'>【生還：極限からの生還】</span>\n\n光が目に刺さる。土の上に倒れ込み、何度も息を吸った。生きている。それだけで、涙が止まらなかった。",  
    status: "生還（生存達成）",  
    choices: []  
  }  
