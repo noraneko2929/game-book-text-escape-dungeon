@@ -1,27 +1,79 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="description" content="武器を持たない初心者冒険者となり、崩落した地下迷宮から知恵と慎重さで生還を目指すテキストアドベンチャー。">
-    <meta name="theme-color" content="#121214">
-    <title>地下ダンジョン脱出ゲーム：暗黒回廊からの生還</title>
-    <!-- 外部スタイルシートの読み込み -->
-    <link rel="stylesheet" href="style.css">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#17191d">
+  <title>地下ダンジョン脱出記</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <main class="app">
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark">◆</span>
+        <div>
+          <p class="eyebrow">TEXT ADVENTURE</p>
+          <h1>地下ダンジョン脱出記</h1>
+        </div>
+      </div>
+      <button id="restartButton" class="button button-quiet" type="button">最初から</button>
+    </header>
 
-<main class="game-container">
-    <div class="header">
-        <h1 class="title">地下ダンジョン脱出ゲーム：暗黒回廊からの生還</h1>
-        <div id="status-badge" class="badge"></div>
-    </div>
-    
-    <div id="text-display" class="text-area" role="status" aria-live="polite" aria-atomic="true" tabindex="-1"></div>
-    <div id="choice-display" class="choice-container" aria-label="行動を選択"></div>
-</main>
+    <section class="game-shell" aria-live="polite">
+      <div class="meta-row">
+        <span id="floorLabel" class="floor-label">第十層・闇の底</span>
+        <span id="saveLabel" class="save-label">セーブ確認中</span>
+      </div>
 
-<script src="storyData.js"></script>
-<script src="gameEngine.js"></script>
+      <div class="progress-track" aria-label="地上までの進行状況">
+        <div id="progressBar" class="progress-bar"></div>
+      </div>
+
+      <section class="status-panel">
+        <span class="panel-label">現在の状況</span>
+        <p id="statusText">読み込み中...</p>
+      </section>
+
+      <article class="story-panel">
+        <p class="chapter-kicker">YOUR STORY</p>
+        <div id="storyText" class="story-text"></div>
+      </article>
+
+      <section class="choice-section">
+        <h2 id="choiceHeading">どうする？</h2>
+        <div id="choices" class="choices"></div>
+      </section>
+
+      <div id="gameOverActions" class="end-actions" hidden>
+        <p class="end-note">冒険はここで終わった。最後に記録した階層から再挑戦できる。</p>
+        <button id="retryButton" class="button button-primary" type="button">セーブした階層から再開</button>
+      </div>
+
+      <div id="clearActions" class="end-actions" hidden>
+        <p class="end-note">地上への生還を果たした。</p>
+        <button id="newGameButton" class="button button-primary" type="button">最初からもう一度遊ぶ</button>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <span>選択によって物語が分岐します。</span>
+      <span>進行状況はこのブラウザに保存されます。</span>
+    </footer>
+  </main>
+
+  <dialog id="restartDialog" class="confirm-dialog">
+    <form method="dialog">
+      <h2>最初からやり直しますか？</h2>
+      <p>現在のセーブデータは消去され、第十層から始まります。</p>
+      <div class="dialog-actions">
+        <button class="button button-quiet" value="cancel">キャンセル</button>
+        <button id="confirmRestartButton" class="button button-danger" value="confirm">最初から始める</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="storyData.js"></script>
+  <script src="game.js"></script>
 </body>
 </html>
