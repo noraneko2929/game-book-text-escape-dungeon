@@ -37,7 +37,15 @@ const storyData = {
   },
 
   start_2: {
-    text: "手元にはランタン（油わずか）、水袋、ナイフ、外套。地図は第四層まで。ここは遥か下だ。悪魔は炎に惹かれ、逃げる者を追い、日光を嫌うという噂を思い出す。",
+    text: "手元にはランタン（油わずか）、水袋、ナイフ、外套。地図は第四層まで。ここは、その遥か下だ。",
+    status: "闇の底／ランタン、水袋、ナイフ、外套",
+    choices: [
+      { text: "冒険者の噂を思い出す", next: "start_3" }
+    ]
+  },
+
+  start_3: {
+    text: "悪魔は音と匂いに敏感で、揺れる炎に惹かれ、逃げる者を追い、日光を嫌うという噂だ。",
     status: "闇の底／ランタン、水袋、ナイフ、外套",
     choices: [
       { text: "声を出して、誰かを呼ぶ", next: "gameover_shout" },
@@ -45,6 +53,7 @@ const storyData = {
       { text: "灯りをつけず、壁伝いに進む", next: "wall_follow" }
     ]
   },
+
 
   look_around: {
     text: "灯りが、骨の散らばる広大な空洞を照らした。油は長くもたない。",
@@ -98,15 +107,15 @@ const storyData = {
     status: "縦穴の中腹／宙づり",
     choices: [
       { text: "体重移動を重ね、時間をかけて手を伸ばす", next: "hole_top" },
-      { text: "勢いをつけて、一気に跳びつく", next: "gameover_hole" }
+      { text: "腕が震える。力尽きる前に跳びつく", next: "gameover_hole" }
     ]
   },
 
   hole_top: {
-    text: "縦穴の出口に這い出た。壁の刻印は「八」。大きな近道だったらしい。",
+    text: "縦穴の出口に這い出た。壁の刻印は「八」。大きな近道だったが、肩を痛めたようだ。",
     status: "縦穴の出口／疲労",
     choices: [
-      { text: "先へ進む", next: "f8_start" }
+      { text: "先へ進む", next: "f8_start_hurt" }
     ]
   },
 
@@ -154,7 +163,7 @@ const storyData = {
     choices: [
       { text: "骨を避け、壁際の窪みを伝って進む", next: "f9_niche" },
       { text: "外套の裾を裂いて靴に巻き、骨の上を行く", next: "f9_cloth" },
-      { text: "音は気にせず、回廊の中央を急ぐ", next: "gameover_bones" }
+      { text: "骨の薄い回廊の中央を通り、素早く抜ける", next: "gameover_bones" }
     ]
   },
 
@@ -249,6 +258,25 @@ const storyData = {
     ]
   },
 
+  f8_start_hurt: {
+    text: "縦穴の出口は、腐卵臭の緑の霧が立ち込める湿地だった。痛めた肩をかばい、咳をこらえる。",
+    status: "第八層・毒霧の湿地／肩を痛めている",
+    choices: [
+      { text: "外套を泥水で濡らして口に当て、咳を殺して進む", next: "f8_cloak" },
+      { text: "ランタンに火を灯し、霧を照らして進む", next: "gameover_gas" },
+      { text: "霧の薄い高所の岩場を伝って進む", next: "f8_rocks_hurt" }
+    ]
+  },
+
+  f8_rocks_hurt: {
+    text: "高所の岩は濡れて滑り、泥の中では巨大な影が蠢く。痛めた肩では、体を支えきれない。",
+    status: "第八層・岩場の上／肩を痛めている",
+    choices: [
+      { text: "肩をかばい、岩の裂け目に足を掛けて進む", next: "f8_stairs" },
+      { text: "痛みをこらえ、肩に力を入れて三点で支える", next: "gameover_slip" }
+    ]
+  },
+
   f8_stairs: {
     text: "階段の刻印は「七」。上から、焼けるような熱風が降りてくる。",
     status: "第八層・階段の前",
@@ -293,7 +321,7 @@ const storyData = {
     status: "第七層・岩棚／足場が脆い",
     choices: [
       { text: "壁に体を押し付け、横歩きで進む", next: "f7_ledge_ok" },
-      { text: "崩れる前に、走って渡りきる", next: "gameover_fall" }
+      { text: "足場が崩れきる前に、素早く渡りきる", next: "gameover_fall" }
     ]
   },
 
@@ -406,7 +434,7 @@ const storyData = {
     status: "第五層・足場の上",
     choices: [
       { text: "影が遠ざかるのを待ち、ゆっくり進む", next: "f5_stairs" },
-      { text: "怖い。残りは走って渡る", next: "gameover_bench" }
+      { text: "影が戻る前に、残りを走って渡る", next: "gameover_bench" }
     ]
   },
 
@@ -528,7 +556,7 @@ const storyData = {
     text: "朽ちた本棚の上を進む。木が軋む。下では、何かが這い回っている。",
     status: "第三層・本棚の上",
     choices: [
-      { text: "体重を分散し、這って進む", next: "f3_stairs" },
+      { text: "体重を分散し、這って進む", next: "f3_shelf2" },
       { text: "次の棚へ跳び移る", next: "gameover_shelf" }
     ]
   },
@@ -538,6 +566,7 @@ const storyData = {
     status: "第三層・通路／悪魔と遭遇",
     choices: [
       { text: "紙屑を頭からかぶり、山に紛れる", next: "f3_paper" },
+      { text: "火を灯したランタンを、遠くの紙の山へ投げる", next: "f3_lure" },
       { text: "ナイフで斬りかかる", next: "gameover_blade" }
     ]
   },
@@ -547,6 +576,24 @@ const storyData = {
     status: "第三層・紙屑の下",
     choices: [
       { text: "悪魔が去ってから、先へ進む", next: "f3_stairs" }
+    ]
+  },
+
+  f3_lure: {
+    text: "ランタンが遠くの紙の山に落ち、炎が燃え広がる。悪魔は炎に群がり、煙が書庫に広がり始めた。",
+    status: "第三層・書庫／ランタンを手放した",
+    choices: [
+      { text: "息を潜め、煙の中を静かに進む", next: "gameover_smoke" },
+      { text: "口を覆い、煙が回る前に走り抜ける", next: "f3_stairs" }
+    ]
+  },
+
+  f3_shelf2: {
+    text: "棚の端で、下の悪魔が顔を上げた。軋む音に気づいたらしい。",
+    status: "第三層・本棚の上／悪魔が見上げている",
+    choices: [
+      { text: "動きを止め、悪魔が下を向くまで息を殺す", next: "f3_stairs" },
+      { text: "ゆっくり静かに、そのまま進み続ける", next: "gameover_creak" }
     ]
   },
 
@@ -575,7 +622,7 @@ const storyData = {
     text: "光の中は安全だった。だが日が傾き、光の筋が急速に細く弱まっていく。",
     status: "第二層・光の筋の中／日没が迫る",
     choices: [
-      { text: "光が消える前に、出口へ走る", next: "f2_run" },
+      { text: "光が消える前に、出口へ走る", next: "f2_edge" },
       { text: "光の中にとどまり、夜明けを待つ", next: "gameover_dark" }
     ]
   },
@@ -586,6 +633,15 @@ const storyData = {
     choices: [
       { text: "光の筋の中へ飛び込む", next: "f2_light" },
       { text: "影に紛れて、そのまま進む", next: "gameover_shadow" }
+    ]
+  },
+
+  f2_edge: {
+    text: "光の筋は端まで来た。出口の坑道までは、暗闇があと十数歩。残光が消えていく。",
+    status: "第二層・光の端／日没",
+    choices: [
+      { text: "残光が消える前に、暗闇へ駆け込む", next: "f2_run" },
+      { text: "光の端で立ち止まり、悪魔の気配を探る", next: "gameover_dusk" }
     ]
   },
 
@@ -650,9 +706,12 @@ const storyData = {
     text: "悪魔は唸るが、逃げない獲物に興味を失ったように、やがて身を丸めて目を閉じた。",
     status: "第一層・悪魔が眠りについた",
     choices: [
-      { text: "壁際を回り込み、外へ向かう", next: "escape_gamble" }
+      { text: "悪魔の気が変わる前に、横を駆け抜ける", next: "gameover_gate" },
+      { text: "壁際を回り込み、足音を殺して外へ向かう", next: "escape_gamble" },
+      { text: "悪魔が深く眠るまで、その場で待つ", next: "gameover_wait" }
     ]
   },
+
 
   // ==================================================
   // ゲームオーバー
@@ -816,6 +875,30 @@ const storyData = {
 
   gameover_shadow: {
     text: "<span class='danger-text'>【ゲームオーバー：影の縄張り】</span>\n\n影の中の悪魔たちが、音もなく距離を詰めてきた。逃げ道は塞がれた。",
+    status: "死亡",
+    choices: []
+  },
+
+  gameover_smoke: {
+    text: "<span class='danger-text'>【ゲームオーバー：煙】</span>\n\n煙は想像より速く回った。咳が止まらず、炎に群がっていた悪魔が振り向いた。",
+    status: "死亡",
+    choices: []
+  },
+
+  gameover_creak: {
+    text: "<span class='danger-text'>【ゲームオーバー：軋む棚】</span>\n\n進み続ける棚の軋みを、悪魔は逃さなかった。棚が激しく揺さぶられた。",
+    status: "死亡",
+    choices: []
+  },
+
+  gameover_dusk: {
+    text: "<span class='danger-text'>【ゲームオーバー：薄れる光】</span>\n\n探っている間に残光は消えた。闇が戻り、悪魔たちが静かに距離を詰めてきた。",
+    status: "死亡",
+    choices: []
+  },
+
+  gameover_wait: {
+    text: "<span class='danger-text'>【ゲームオーバー：長い沈黙】</span>\n\n立ち尽くす時間が長いほど、悪魔の興味は戻った。鼻が動き、牙が近づいてきた。",
     status: "死亡",
     choices: []
   },
