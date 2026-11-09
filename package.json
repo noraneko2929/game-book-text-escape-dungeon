@@ -5,6 +5,6 @@
   "description": "地下ダンジョン脱出ゲーム",
   "scripts": {
     "test": "node --test",
-    "check:syntax": "node --check storyData.js && node --check gameEngine.js"
+    "check:syntax": "node --check storyData.js && node --check game.js"
   }
 }
