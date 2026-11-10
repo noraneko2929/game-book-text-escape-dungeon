@@ -20,6 +20,13 @@
  * 【ルール】 本文は1ページ90文字以内（タイトル行を含み、HTMLタグと改行は除く）。長い場面は分割して「続ける」で繋ぐ。
  *
  * 【エンディング】 escape_true / escape_normal / escape_gamble
+ *
+ * 【任意フィールド（エンジン拡張用。既存の text / status / choices は従来どおり）】
+ *  type       : "normal" | "gameover" | "ending"
+ *  floor      : 階層番号（10〜1）。複数階層から共有されるゲームオーバーは省略
+ *                （省略時は、直前の通常ノードの floor を引き継ぐ）
+ *  checkpoint : true のノードに到達したら、再開地点として保存する
+ *  endingId   : エンディングの識別（"true" | "normal" | "gamble"）
  */
 
 const storyData = {
@@ -29,6 +36,8 @@ const storyData = {
   // ==================================================
 
   start: {
+    type: "normal",
+    floor: 10,
     text: "駆け出し冒険者のあなたは、古い罠の床を踏み抜き、層の裂け目を幾度も滑り落ちて、闇の底へ着いた。砂の山が衝撃を和らげたらしい。全身が痛む。",
     status: "闇の底／全身が痛む",
     choices: [
@@ -37,6 +46,8 @@ const storyData = {
   },
 
   start_2: {
+    type: "normal",
+    floor: 10,
     text: "手元にはランタン（油わずか）、水袋、ナイフ、外套。地図は第四層まで。ここは、その遥か下だ。",
     status: "闇の底／ランタン、水袋、ナイフ、外套",
     choices: [
@@ -45,6 +56,9 @@ const storyData = {
   },
 
   start_3: {
+    type: "normal",
+    floor: 10,
+    checkpoint: true,
     text: "悪魔は音と匂いに敏感で、揺れる炎に惹かれ、逃げる者を追い、日光を嫌うという噂だ。",
     status: "闇の底／ランタン、水袋、ナイフ、外套",
     choices: [
@@ -56,6 +70,8 @@ const storyData = {
 
 
   look_around: {
+    type: "normal",
+    floor: 10,
     text: "灯りが、骨の散らばる広大な空洞を照らした。油は長くもたない。",
     status: "闇の底／ランタン点灯中",
     choices: [
@@ -66,6 +82,8 @@ const storyData = {
   },
 
   wall_follow: {
+    type: "normal",
+    floor: 10,
     text: "生臭い匂いが濃くなる。手を伸ばすと、温かい塊が規則的に上下していた。眠る悪魔だ。脇に隙間がある。",
     status: "闇の底／眠る大悪魔の前",
     choices: [
@@ -76,6 +94,8 @@ const storyData = {
   },
 
   dark_adapt: {
+    type: "normal",
+    floor: 10,
     text: "暗闇に目を慣らして数分待つと、壁の青白い苔の光と、頬を撫でる風の流れが分かってきた。",
     status: "闇の底／暗闇に目が慣れた",
     choices: [
@@ -85,6 +105,8 @@ const storyData = {
   },
 
   moss_path: {
+    type: "normal",
+    floor: 10,
     text: "苔の光の先に階段が見える。足元にも苔が広がり、割れ目では下級悪魔の群れが眠り、光が寝顔を青白く照らす。",
     status: "闇の底／下級悪魔の巣の脇",
     choices: [
@@ -94,6 +116,8 @@ const storyData = {
   },
 
   wind_path: {
+    type: "normal",
+    floor: 10,
     text: "風をたどると、天井の高い縦穴の底に着いた。落ちてきた経路とは別の、自然の割れ目らしい。岩肌の手がかりが、上へ続いている。",
     status: "闇の底／縦穴の底",
     choices: [
@@ -103,6 +127,8 @@ const storyData = {
   },
 
   hole_climb: {
+    type: "normal",
+    floor: 10,
     text: "十数メートル登ったところで手がかりが途切れた。次の岩棚まで、腕一本分以上ある。",
     status: "縦穴の中腹／宙づり",
     choices: [
@@ -112,14 +138,18 @@ const storyData = {
   },
 
   hole_top: {
+    type: "normal",
+    floor: 8,
     text: "縦穴の出口に這い出た。壁の刻印は「八」。大きな近道だったが、肩を痛めたようだ。",
-    status: "縦穴の出口／疲労",
+    status: "縦穴の出口／肩を痛めた",
     choices: [
       { text: "先へ進む", next: "f8_start_hurt" }
     ]
   },
 
   crawl_past: {
+    type: "normal",
+    floor: 10,
     text: "腹ばいで悪魔の脇を進む。生臭い息が頬にかかる。隙間は残りわずかだ。",
     status: "闇の底／悪魔のすぐ脇",
     choices: [
@@ -129,6 +159,8 @@ const storyData = {
   },
 
   throw_stone: {
+    type: "normal",
+    floor: 10,
     text: "小石が遠くで鳴った。悪魔が目を覚まし、重い足音で音のほうへ歩き出す。",
     status: "闇の底／悪魔が覚醒",
     choices: [
@@ -138,6 +170,8 @@ const storyData = {
   },
 
   crawl_success: {
+    type: "normal",
+    floor: 10,
     text: "隙間を抜けた。悪魔の気配を背に手探りで進むと、石の階段に突き当たった。",
     status: "闇の底／階段の前",
     choices: [
@@ -146,6 +180,8 @@ const storyData = {
   },
 
   f10_stairs: {
+    type: "normal",
+    floor: 10,
     text: "刻印を確かめると、上り階段に「九」とあった。ここは第十層だったのだ。",
     status: "第十層・階段の前",
     choices: [
@@ -158,6 +194,9 @@ const storyData = {
   // ==================================================
 
   f9_start: {
+    type: "normal",
+    floor: 9,
+    checkpoint: true,
     text: "壁の苔が淡く光る回廊に、白い骨が敷き詰められている。踏めば鳴る。奥から、見張りの足音が聞こえる。",
     status: "第九層・骨の回廊",
     choices: [
@@ -168,6 +207,8 @@ const storyData = {
   },
 
   f9_niche: {
+    type: "normal",
+    floor: 9,
     text: "窪みに身を潜めると、長い腕の悪魔が巡回して通り過ぎた。往復の間隔は一定のようだ。",
     status: "第九層・窪みの中",
     choices: [
@@ -177,6 +218,8 @@ const storyData = {
   },
 
   f9_cloth: {
+    type: "normal",
+    floor: 9,
     text: "自分の足音は消えた。だが見張りの足音が、思ったより近くまで来ている。",
     status: "第九層・見張りが接近",
     choices: [
@@ -186,6 +229,8 @@ const storyData = {
   },
 
   f9_count: {
+    type: "normal",
+    floor: 9,
     text: "足音を数え、窪みから窪みへ移動し、回廊の出口までたどり着いた。",
     status: "第九層・回廊の出口",
     choices: [
@@ -194,6 +239,8 @@ const storyData = {
   },
 
   f9_follow: {
+    type: "normal",
+    floor: 9,
     text: "悪魔の足音に紛れて後を追う。突然、悪魔が立ち止まり、鼻を鳴らした。",
     status: "第九層・気づかれかけている",
     choices: [
@@ -203,6 +250,8 @@ const storyData = {
   },
 
   f9_still: {
+    type: "normal",
+    floor: 9,
     text: "息を止めて耐える。悪魔は興味を失い、再び歩き出した。その隙に出口へ急ぐ。",
     status: "第九層・出口付近／消耗",
     choices: [
@@ -211,6 +260,8 @@ const storyData = {
   },
 
   f9_stairs: {
+    type: "normal",
+    floor: 9,
     text: "階段の刻印は「八」。上から、湿った生ぬるい空気が降りてくる。",
     status: "第九層・階段の前",
     choices: [
@@ -223,6 +274,9 @@ const storyData = {
   // ==================================================
 
   f8_start: {
+    type: "normal",
+    floor: 8,
+    checkpoint: true,
     text: "腐った卵のような匂いの緑の霧が立ち込める湿地。吸うと頭が痛む。霧の奥で、ごぼ、ごぼと泡立つ音がする。",
     status: "第八層・毒霧の湿地",
     choices: [
@@ -233,6 +287,8 @@ const storyData = {
   },
 
   f8_cloak: {
+    type: "normal",
+    floor: 8,
     text: "濡れた外套越しに息をする。霧は濃く、足元は泥だ。泡立つ音が左から聞こえる。",
     status: "第八層・霧の中",
     choices: [
@@ -242,6 +298,8 @@ const storyData = {
   },
 
   f8_away: {
+    type: "normal",
+    floor: 8,
     text: "霧が薄れ、乾いた岩の道に出た。前方に、上り階段が見える。",
     status: "第八層・霧の外れ",
     choices: [
@@ -250,6 +308,8 @@ const storyData = {
   },
 
   f8_rocks: {
+    type: "normal",
+    floor: 8,
     text: "高い岩場は霧が薄い。だが岩は濡れて滑り、下では巨大な影が泥を這っている。",
     status: "第八層・岩場の上",
     choices: [
@@ -259,25 +319,54 @@ const storyData = {
   },
 
   f8_start_hurt: {
+    type: "normal",
+    floor: 8,
+    checkpoint: true,
     text: "縦穴の出口は、腐卵臭の緑の霧が立ち込める湿地だった。痛めた肩をかばい、咳をこらえる。",
     status: "第八層・毒霧の湿地／肩を痛めている",
     choices: [
-      { text: "外套を泥水で濡らして口に当て、咳を殺して進む", next: "f8_cloak" },
+      { text: "外套を泥水で濡らして口に当て、咳を殺して進む", next: "f8_cloak_hurt" },
       { text: "ランタンに火を灯し、霧を照らして進む", next: "gameover_gas" },
       { text: "霧の薄い高所の岩場を伝って進む", next: "f8_rocks_hurt" }
     ]
   },
 
+  f8_cloak_hurt: {
+    type: "normal",
+    floor: 8,
+    text: "濡れた外套越しでも、咳が込み上げる。霧の奥の泡立つ音が、左から聞こえる。",
+    status: "第八層・霧の中／肩を痛めている",
+    choices: [
+      { text: "外套を外して、咳をして息を整える", next: "gameover_cough" },
+      { text: "泡立つ音から遠ざかり、咳は外套で押さえる", next: "f8_away_hurt" },
+      { text: "咳が出る前に急ぎ、泡立つ音のする左手へ進む", next: "gameover_swamp" }
+    ]
+  },
+
+  f8_away_hurt: {
+    type: "normal",
+    floor: 8,
+    text: "霧が薄れ、乾いた岩の道に出た。痛めた肩が疼くが、前方に上り階段が見える。",
+    status: "第八層・霧の外れ／肩を痛めている",
+    choices: [
+      { text: "階段へ向かう", next: "f8_stairs" }
+    ]
+  },
+
   f8_rocks_hurt: {
+    type: "normal",
+    floor: 8,
     text: "高所の岩は濡れて滑り、泥の中では巨大な影が蠢く。痛めた肩では、体を支えきれない。",
     status: "第八層・岩場の上／肩を痛めている",
     choices: [
       { text: "肩をかばい、岩の裂け目に足を掛けて進む", next: "f8_stairs" },
-      { text: "痛みをこらえ、肩に力を入れて三点で支える", next: "gameover_slip" }
+      { text: "痛みをこらえ、肩に力を入れて三点で支える", next: "gameover_slip_hurt" }
     ]
   },
 
   f8_stairs: {
+    type: "normal",
+    floor: 8,
     text: "階段の刻印は「七」。上から、焼けるような熱風が降りてくる。",
     status: "第八層・階段の前",
     choices: [
@@ -290,6 +379,9 @@ const storyData = {
   // ==================================================
 
   f7_start: {
+    type: "normal",
+    floor: 7,
+    checkpoint: true,
     text: "灼熱の大空洞。足元を溶岩の川が赤く脈打ち、熱気で視界が揺れ、熱風が喉を焼く。",
     status: "第七層・熱の大空洞／体力が削られる",
     choices: [
@@ -298,6 +390,8 @@ const storyData = {
   },
 
   f7_start2: {
+    type: "normal",
+    floor: 7,
     text: "対岸に階段が見える。道は三つ。古い石橋、壁沿いの岩棚、灰混じりの熱気を噴く岩壁の亀裂だ。",
     status: "第七層・熱の大空洞",
     choices: [
@@ -308,6 +402,8 @@ const storyData = {
   },
 
   f7_bridge: {
+    type: "normal",
+    floor: 7,
     text: "橋の中央に、悪魔の石像が立っている。あまりに精巧で、今にも動き出しそうだ。",
     status: "第七層・石橋の手前",
     choices: [
@@ -317,6 +413,8 @@ const storyData = {
   },
 
   f7_ledge: {
+    type: "normal",
+    floor: 7,
     text: "細い岩棚の途中で、足元の岩が崩れ始めた。次の足場まで、あと数歩。",
     status: "第七層・岩棚／足場が脆い",
     choices: [
@@ -326,6 +424,8 @@ const storyData = {
   },
 
   f7_ledge_ok: {
+    type: "normal",
+    floor: 7,
     text: "崩れかけの岩棚を渡りきった。背後で、岩が溶岩へ落ちていく。階段はもうすぐだ。",
     status: "第七層・対岸",
     choices: [
@@ -334,6 +434,8 @@ const storyData = {
   },
 
   f7_crevice: {
+    type: "normal",
+    floor: 7,
     text: "亀裂の奥は悪魔の巣。獣毛と灰を敷き固めた寝床で幼体が眠り、奥には上へ続く道がある。",
     status: "第七層・悪魔の巣の中",
     choices: [
@@ -343,6 +445,8 @@ const storyData = {
   },
 
   f7_nest: {
+    type: "normal",
+    floor: 7,
     text: "巣の中ほどで、幼体が寝返りを打った。遠くから、大きな足音が近づいてくる。",
     status: "第七層・巣の中／親が接近",
     choices: [
@@ -352,6 +456,8 @@ const storyData = {
   },
 
   f7_stairs: {
+    type: "normal",
+    floor: 7,
     text: "たどり着いた上り階段の刻印は「六」。上から、金属の軋む音が聞こえてくる。",
     status: "第七層・階段の前",
     choices: [
@@ -364,6 +470,9 @@ const storyData = {
   // ==================================================
 
   f6_start: {
+    type: "normal",
+    floor: 6,
+    checkpoint: true,
     text: "壁の魔石灯が揺れず淡く光る、錆びたレールの鉱山跡。腐った支柱が軋み、天井から石が落ちてくる。",
     status: "第六層・錆びた鉱山",
     choices: [
@@ -373,6 +482,8 @@ const storyData = {
   },
 
   f6_walk: {
+    type: "normal",
+    floor: 6,
     text: "進むほど、天井の軋みが大きくなる。背後から、崩落の轟音が迫ってきた。",
     status: "第六層・崩落が迫る",
     choices: [
@@ -382,6 +493,8 @@ const storyData = {
   },
 
   f6_exit: {
+    type: "normal",
+    floor: 6,
     text: "崩落を背に、ぎりぎりで駆け抜けた。振り返ると、通路は岩で埋まっていた。",
     status: "第六層・出口付近",
     choices: [
@@ -390,6 +503,8 @@ const storyData = {
   },
 
   f6_side: {
+    type: "normal",
+    floor: 6,
     text: "狭い坑道の奥で、爪が岩を掘る音がする。ときおり音が止み、悪魔が耳を澄ます。",
     status: "第六層・脇の坑道",
     choices: [
@@ -399,6 +514,8 @@ const storyData = {
   },
 
   f6_stairs: {
+    type: "normal",
+    floor: 6,
     text: "階段の刻印は「五」。上から、冷たく湿った空気が降りてくる。",
     status: "第六層・階段の前",
     choices: [
@@ -411,6 +528,9 @@ const storyData = {
   // ==================================================
 
   f5_start: {
+    type: "normal",
+    floor: 5,
+    checkpoint: true,
     text: "水没した巨大な礼拝堂。浅い所の水底で魔法陣が淡く光り、水が下層へ抜けるのを押さえている。",
     status: "第五層・水没の礼拝堂",
     choices: [
@@ -419,6 +539,8 @@ const storyData = {
   },
 
   f5_start2: {
+    type: "normal",
+    floor: 5,
     text: "水は浅い所でも腰の高さ、奥は底が見えない。浮かぶ長椅子や板の下に気配がある。天井には梁と、鐘が吊られている。",
     status: "第五層・水没の礼拝堂／水中に悪魔",
     choices: [
@@ -430,6 +552,8 @@ const storyData = {
   },
 
   f5_bench: {
+    type: "normal",
+    floor: 5,
     text: "足場の下を、巨大な影がすぅっと通り過ぎた。水面がわずかに揺れる。",
     status: "第五層・足場の上",
     choices: [
@@ -439,6 +563,8 @@ const storyData = {
   },
 
   f5_beam: {
+    type: "normal",
+    floor: 5,
     text: "腐った梁を伝う。途中の一本が折れており、隣の梁へ飛び移るしかない。",
     status: "第五層・梁の上／足場が脆い",
     choices: [
@@ -448,6 +574,8 @@ const storyData = {
   },
 
   f5_jump: {
+    type: "normal",
+    floor: 5,
     text: "隣の梁にしがみついた。腕を強く打ち、梁が嫌な音を立てて軋んでいる。",
     status: "第五層・梁の上／腕を打撲",
     choices: [
@@ -457,6 +585,8 @@ const storyData = {
   },
 
   f5_bell: {
+    type: "normal",
+    floor: 5,
     text: "鐘は広間の中央。綱は水際の柱まで伸びる。引くと、悪魔たちが鐘の真下へ泳いでいった。",
     status: "第五層・柱の陰／悪魔が誘導された",
     choices: [
@@ -466,6 +596,8 @@ const storyData = {
   },
 
   f5_bell_run: {
+    type: "normal",
+    floor: 5,
     text: "水を蹴って走る。数匹が追ってきたが、岸に上がると水際で牙を鳴らすだけだった。",
     status: "第五層・向こう岸",
     choices: [
@@ -474,6 +606,8 @@ const storyData = {
   },
 
   f5_stairs_hurt: {
+    type: "normal",
+    floor: 5,
     text: "階段の刻印は「四」。打撲した腕が疼くが、じき引くだろう。上から、鉄と血の匂いが降りてくる。",
     status: "第五層・階段の前／腕を打撲",
     choices: [
@@ -482,6 +616,8 @@ const storyData = {
   },
 
   f5_stairs: {
+    type: "normal",
+    floor: 5,
     text: "階段の刻印は「四」。上から、鉄と血の匂いが降りてくる。",
     status: "第五層・階段の前",
     choices: [
@@ -494,6 +630,9 @@ const storyData = {
   // ==================================================
 
   f4_start: {
+    type: "normal",
+    floor: 4,
+    checkpoint: true,
     text: "揺れない魔石灯に照らされた牢獄の廊下。地図の最下層だが、載るのは階段の位置だけ。奥には看守部屋がある。檻の悪魔たちが、こちらをうかがう。",
     status: "第四層・牢獄回廊",
     choices: [
@@ -504,6 +643,8 @@ const storyData = {
   },
 
   f4_slow: {
+    type: "normal",
+    floor: 4,
     text: "檻の気配を背に歩く。廊下の奥の看守部屋から、いびきが聞こえてくる。",
     status: "第四層・看守部屋の前",
     choices: [
@@ -513,6 +654,8 @@ const storyData = {
   },
 
   f4_guard: {
+    type: "normal",
+    floor: 4,
     text: "看守の悪魔が椅子で眠っている。出口の扉は、看守のすぐ後ろだ。",
     status: "第四層・看守の目の前",
     choices: [
@@ -522,6 +665,8 @@ const storyData = {
   },
 
   f4_water: {
+    type: "normal",
+    floor: 4,
     text: "撒かれた水に、渇いた悪魔たちが檻を揺らして群がる。物陰に身を寄せると、看守が怒鳴りながら脇を通り、檻へ向かった。",
     status: "第四層・牢獄回廊／水袋を失う",
     choices: [
@@ -531,6 +676,8 @@ const storyData = {
   },
 
   f4_stairs: {
+    type: "normal",
+    floor: 4,
     text: "階段の刻印は「三」。上から、古い紙とカビの匂いが降りてくる。",
     status: "第四層・階段の前",
     choices: [
@@ -543,6 +690,9 @@ const storyData = {
   // ==================================================
 
   f3_start: {
+    type: "normal",
+    floor: 3,
+    checkpoint: true,
     text: "地図では書庫のはずの場所は崩れ果て、倒れた本棚が迷路のように積み重なる。壁の苔が淡く光り、奥で紙をめくる音がする。",
     status: "第三層・崩れた書庫",
     choices: [
@@ -553,6 +703,8 @@ const storyData = {
   },
 
   f3_shelf: {
+    type: "normal",
+    floor: 3,
     text: "朽ちた本棚の上を進む。木が軋む。下では、何かが這い回っている。",
     status: "第三層・本棚の上",
     choices: [
@@ -562,6 +714,8 @@ const storyData = {
   },
 
   f3_aisle: {
+    type: "normal",
+    floor: 3,
     text: "通路の先の紙屑の山から、紙を食む悪魔が顔を上げた。",
     status: "第三層・通路／悪魔と遭遇",
     choices: [
@@ -572,6 +726,8 @@ const storyData = {
   },
 
   f3_paper: {
+    type: "normal",
+    floor: 3,
     text: "紙屑の下で身を伏せる。紙とカビの匂いが人の匂いを隠し、悪魔は山を素通りした。",
     status: "第三層・紙屑の下",
     choices: [
@@ -580,6 +736,8 @@ const storyData = {
   },
 
   f3_lure: {
+    type: "normal",
+    floor: 3,
     text: "ランタンが遠くの紙の山に落ち、炎が燃え広がる。悪魔は炎に群がり、煙が書庫に広がり始めた。",
     status: "第三層・書庫／ランタンを手放した",
     choices: [
@@ -589,6 +747,8 @@ const storyData = {
   },
 
   f3_shelf2: {
+    type: "normal",
+    floor: 3,
     text: "棚の端で、下の悪魔が顔を上げた。軋む音に気づいたらしい。",
     status: "第三層・本棚の上／悪魔が見上げている",
     choices: [
@@ -598,6 +758,8 @@ const storyData = {
   },
 
   f3_stairs: {
+    type: "normal",
+    floor: 3,
     text: "階段の刻印は「二」。上から、かすかに温かい光が降りてくる。",
     status: "第三層・階段の前",
     choices: [
@@ -610,6 +772,9 @@ const storyData = {
   // ==================================================
 
   f2_start: {
+    type: "normal",
+    floor: 2,
+    checkpoint: true,
     text: "天井の裂け目から、夕日の一筋が洞窟に差している。悪魔たちは光を避け、影に潜む。",
     status: "第二層・夕日の裂け目",
     choices: [
@@ -619,6 +784,8 @@ const storyData = {
   },
 
   f2_light: {
+    type: "normal",
+    floor: 2,
     text: "光の中は安全だった。だが日が傾き、光の筋が急速に細く弱まっていく。",
     status: "第二層・光の筋の中／日没が迫る",
     choices: [
@@ -628,6 +795,8 @@ const storyData = {
   },
 
   f2_shadow: {
+    type: "normal",
+    floor: 2,
     text: "壁際の影は、悪魔たちの縄張りだった。無数の気配が、息を潜めてこちらをうかがっている。",
     status: "第二層・影の中／囲まれつつある",
     choices: [
@@ -637,15 +806,21 @@ const storyData = {
   },
 
   f2_edge: {
-    text: "光の筋は端まで来た。出口の坑道までは、暗闇があと十数歩。残光が消えていく。",
-    status: "第二層・光の端／日没",
+    type: "normal",
+    floor: 2,
+    text: "光の筋の端に来た。出口へは、足場の崩れかけた岩場と、風が通る静かな抜け道がある。岩場には残光が差し、抜け道は闇の中だ。",
+    status: "第二層・光の端／日没が迫る",
     choices: [
-      { text: "残光が消える前に、暗闇へ駆け込む", next: "f2_run" },
-      { text: "光の端で立ち止まり、悪魔の気配を探る", next: "gameover_dusk" }
+      { text: "風の通る静かな抜け道を、闇の中へ進む", next: "gameover_passage" },
+      { text: "崩れかけの岩場を、残光の中で越える", next: "f2_run" },
+      { text: "崩れる前に、岩場を一気に駆け抜けて越える", next: "gameover_rocks" }
     ]
   },
 
+
   f2_run: {
+    type: "normal",
+    floor: 2,
     text: "光が消える寸前、坑道へ駆け込んだ。入口の刻印は「一」。背後で、悪魔たちが残光に阻まれ牙を鳴らす。",
     status: "第二層・出口",
     choices: [
@@ -658,6 +833,9 @@ const storyData = {
   // ==================================================
 
   f1_start: {
+    type: "normal",
+    floor: 1,
+    checkpoint: true,
     text: "崩れた旧坑道。外の風の匂いがする。出口の前に、巨大な悪魔が座り込んでいる。",
     status: "第一層・旧坑道／夜",
     choices: [
@@ -666,6 +844,8 @@ const storyData = {
   },
 
   f1_start2: {
+    type: "normal",
+    floor: 1,
     text: "最近の崩落で開いた出口を、夜は見張っているらしい。脇には、細い排水溝と横穴がある。",
     status: "第一層・旧坑道／出口は目前",
     choices: [
@@ -676,6 +856,8 @@ const storyData = {
   },
 
   f1_drain: {
+    type: "normal",
+    floor: 1,
     text: "排水溝の中ほどで肩がつかえ、動けなくなった。外の月明かりは、すぐそこだ。",
     status: "第一層・排水溝の中／身動きがとれない",
     choices: [
@@ -685,6 +867,8 @@ const storyData = {
   },
 
   f1_dawn: {
+    type: "normal",
+    floor: 1,
     text: "風下の物陰で夜明けを待つ。悪魔は動かない。崩れた天井の隙間から細い光が差し始め、少しずつ出口の悪魔へ伸びていく。",
     status: "第一層・物陰／夜明け",
     choices: [
@@ -694,6 +878,8 @@ const storyData = {
   },
 
   f1_bold: {
+    type: "normal",
+    floor: 1,
     text: "悪魔が鼻を鳴らし、あなたへ顔を向ける。そして、ゆっくりと立ち上がった。",
     status: "第一層・悪魔の目の前",
     choices: [
@@ -703,8 +889,10 @@ const storyData = {
   },
 
   f1_bold2: {
-    text: "悪魔は唸るが、逃げない獲物に興味を失ったように、やがて身を丸めて目を閉じた。",
-    status: "第一層・悪魔が眠りについた",
+    type: "normal",
+    floor: 1,
+    text: "悪魔は唸るが、逃げない獲物に興味を失ったように、身を丸めて目を閉じた。眠りは浅く、鼻先がまだ小さく動いている。",
+    status: "第一層・悪魔が浅く眠っている",
     choices: [
       { text: "悪魔の気が変わる前に、横を駆け抜ける", next: "gameover_gate" },
       { text: "壁際を回り込み、足音を殺して外へ向かう", next: "escape_gamble" },
@@ -718,198 +906,287 @@ const storyData = {
   // ==================================================
 
   gameover_shout: {
+    type: "gameover",
+    floor: 10,
     text: "<span class='danger-text'>【ゲームオーバー：呼び声】</span>\n\n声は闇に反響した。返事の代わりに、無数の何かが這い寄る音が答えた。",
     status: "死亡",
     choices: []
   },
 
   gameover_light: {
+    type: "gameover",
     text: "<span class='danger-text'>【ゲームオーバー：灯火】</span>\n\n揺れる炎に群がるように、闇の中の赤い目が集まってきた。",
     status: "死亡",
     choices: []
   },
 
   gameover_moss: {
+    type: "gameover",
+    floor: 10,
     text: "<span class='danger-text'>【ゲームオーバー：消えた光】</span>\n\n苔を潰す音と匂いに、小悪魔たちが一斉に目を覚まし、牙を剥いた。",
     status: "死亡",
     choices: []
   },
 
   gameover_run: {
+    type: "gameover",
+    floor: 10,
     text: "<span class='danger-text'>【ゲームオーバー：疾走】</span>\n\n駆ける足音が空洞に響く。眠っていた悪魔の目が、ゆっくりと開いた。",
     status: "死亡",
     choices: []
   },
 
   gameover_stone: {
+    type: "gameover",
+    floor: 10,
     text: "<span class='danger-text'>【ゲームオーバー：立ち尽くす者】</span>\n\n何もないと悟った悪魔が振り返る。立ち尽くすあなたの匂いを、鼻が捉えた。",
     status: "死亡",
     choices: []
   },
 
   gameover_hole: {
+    type: "gameover",
+    floor: 10,
     text: "<span class='danger-text'>【ゲームオーバー：落下】</span>\n\n指先は岩に届かなかった。身体は闇に吸い込まれ、悲鳴は消えた。",
     status: "死亡",
     choices: []
   },
 
   gameover_bones: {
+    type: "gameover",
+    floor: 9,
     text: "<span class='danger-text'>【ゲームオーバー：骨の音】</span>\n\n骨の砕ける音が回廊に響く。駆けてきた悪魔の長い腕が、あなたを掴んだ。",
     status: "死亡",
     choices: []
   },
 
   gameover_chase: {
+    type: "gameover",
+    floor: 9,
     text: "<span class='danger-text'>【ゲームオーバー：追跡】</span>\n\n走り出した気配に、見張りが振り向いた。狭い回廊に、逃げ場はなかった。",
     status: "死亡",
     choices: []
   },
 
   gameover_gas: {
+    type: "gameover",
+    floor: 8,
     text: "<span class='danger-text'>【ゲームオーバー：爆炎】</span>\n\n霧は可燃性のガスだった。炎が触れた瞬間、湿地は火の海になった。",
     status: "死亡",
     choices: []
   },
 
   gameover_swamp: {
+    type: "gameover",
+    floor: 8,
     text: "<span class='danger-text'>【ゲームオーバー：沼】</span>\n\n泡立つ音の方は底なし沼だった。泥が足を飲み込み、もがくほど沈んだ。",
     status: "死亡",
     choices: []
   },
 
   gameover_slip: {
+    type: "gameover",
+    floor: 8,
     text: "<span class='danger-text'>【ゲームオーバー：滑落】</span>\n\n濡れた岩に足が滑った。泥の中の巨大な影が、口を開けて待っていた。",
     status: "死亡",
     choices: []
   },
 
   gameover_statue: {
+    type: "gameover",
+    floor: 7,
     text: "<span class='danger-text'>【ゲームオーバー：擬態】</span>\n\n石像の目が動いた。悪魔はあなたを掴み、溶岩の川へ放り投げた。",
     status: "死亡",
-    choices: []
-  },
+    choices: []  },
 
   gameover_fall: {
+    type: "gameover",
+    floor: 7,
     text: "<span class='danger-text'>【ゲームオーバー：岩棚】</span>\n\n走った重みに岩棚が耐えきれず崩れた。身体は溶岩の川へ落ちていった。",
     status: "死亡",
     choices: []
   },
 
+  gameover_slip_hurt: {
+    type: "gameover",
+    floor: 8,
+    text: "<span class='danger-text'>【ゲームオーバー：痛む肩】</span>\n\n肩に力を入れた瞬間、激痛で手が離れた。泥の中の巨大な影が、口を開けて待っていた。",
+    status: "死亡",
+    choices: []
+  },
+
+  gameover_cough: {
+    type: "gameover",
+    floor: 8,
+    text: "<span class='danger-text'>【ゲームオーバー：咳】</span>\n\n咳が霧に響いた。泥の中の巨大な影が、音のほうへゆっくりと向きを変えた。",
+    status: "死亡",
+    choices: []
+  },
+
   gameover_nest: {
+    type: "gameover",
+    floor: 7,
     text: "<span class='danger-text'>【ゲームオーバー：親の怒り】</span>\n\n幼体の悲鳴に、洞窟の外から怒りの咆哮が応えた。親が戻ってきたのだ。",
     status: "死亡",
     choices: []
   },
 
   gameover_crush: {
+    type: "gameover",
+    floor: 6,
     text: "<span class='danger-text'>【ゲームオーバー：崩落】</span>\n\n伏せたまま動けないうちに、天井が崩れ、岩が降り注いだ。",
     status: "死亡",
     choices: []
   },
 
   gameover_dig: {
+    type: "gameover",
+    floor: 6,
     text: "<span class='danger-text'>【ゲームオーバー：地中の爪】</span>\n\n静まり返った坑道で、足音は悪魔に筒抜けだった。足元の床が、爪で裂けた。",
     status: "死亡",
     choices: []
   },
 
   gameover_water: {
+    type: "gameover",
+    floor: 5,
     text: "<span class='danger-text'>【ゲームオーバー：水底】</span>\n\n足首を何かが掴んだ。黒い水の底へ、凄まじい力で引きずり込まれた。",
     status: "死亡",
     choices: []
   },
 
   gameover_bench: {
+    type: "gameover",
+    floor: 5,
     text: "<span class='danger-text'>【ゲームオーバー：足場の崩壊】</span>\n\n走った拍子に足場が傾き、水へ落ちた。待っていた牙が、足首を捕らえた。",
     status: "死亡",
     choices: []
   },
 
   gameover_beam: {
+    type: "gameover",
+    floor: 5,
     text: "<span class='danger-text'>【ゲームオーバー：梁の崩壊】</span>\n\n梁の上で立ち上がった瞬間、朽ちた木が折れ、水面へ落ちた。待っていた牙が、あなたを捕らえた。",
     status: "死亡",
     choices: []
   },
 
   gameover_bell: {
+    type: "gameover",
+    floor: 5,
     text: "<span class='danger-text'>【ゲームオーバー：二度目の鐘】</span>\n\n二度目の鐘で、悪魔は音の出どころを悟った。綱を握る者のいる水際へ殺到した。",
     status: "死亡",
     choices: []
   },
 
   gameover_cell: {
+    type: "gameover",
+    floor: 4,
     text: "<span class='danger-text'>【ゲームオーバー：牢の怒号】</span>\n\n駆ける足音に悪魔たちが吠え、檻を揺らした。看守が目を覚ました。",
     status: "死亡",
     choices: []
   },
 
   gameover_guard: {
+    type: "gameover",
+    floor: 4,
     text: "<span class='danger-text'>【ゲームオーバー：看守】</span>\n\n看守が鼻を鳴らし、ゆっくりと顔を上げた。逃げ場のない廊下で、巨体が立ちはだかる。",
     status: "死亡",
     choices: []
   },
 
   gameover_guard_back: {
+    type: "gameover",
+    floor: 4,
     text: "<span class='danger-text'>【ゲームオーバー：看守の帰還】</span>\n\n騒ぎを収めた看守が戻ってきた。物陰に潜むあなたを、巨体が見下ろした。",
     status: "死亡",
     choices: []
   },
 
   gameover_shelf: {
+    type: "gameover",
+    floor: 3,
     text: "<span class='danger-text'>【ゲームオーバー：書棚】</span>\n\n跳び移った本棚が倒れた。轟音に、書庫中の悪魔が顔を上げた。",
     status: "死亡",
     choices: []
   },
 
   gameover_blade: {
+    type: "gameover",
+    floor: 3,
     text: "<span class='danger-text'>【ゲームオーバー：刃】</span>\n\nナイフは硬い皮膚に弾かれた。紙を食む牙が、あなたに向いた。",
     status: "死亡",
     choices: []
   },
 
   gameover_dark: {
+    type: "gameover",
+    floor: 2,
     text: "<span class='danger-text'>【ゲームオーバー：日没】</span>\n\n光は消え、闇が戻った。影に潜んでいた悪魔たちが、一斉に動き出した。",
     status: "死亡",
     choices: []
   },
 
   gameover_shadow: {
+    type: "gameover",
+    floor: 2,
     text: "<span class='danger-text'>【ゲームオーバー：影の縄張り】</span>\n\n影の中の悪魔たちが、音もなく距離を詰めてきた。逃げ道は塞がれた。",
     status: "死亡",
     choices: []
   },
 
   gameover_smoke: {
+    type: "gameover",
+    floor: 3,
     text: "<span class='danger-text'>【ゲームオーバー：煙】</span>\n\n煙は想像より速く回った。咳が止まらず、炎に群がっていた悪魔が振り向いた。",
     status: "死亡",
     choices: []
   },
 
   gameover_creak: {
+    type: "gameover",
+    floor: 3,
     text: "<span class='danger-text'>【ゲームオーバー：軋む棚】</span>\n\n進み続ける棚の軋みを、悪魔は逃さなかった。棚が激しく揺さぶられた。",
     status: "死亡",
     choices: []
   },
 
-  gameover_dusk: {
-    text: "<span class='danger-text'>【ゲームオーバー：薄れる光】</span>\n\n探っている間に残光は消えた。闇が戻り、悪魔たちが静かに距離を詰めてきた。",
+  gameover_passage: {
+    type: "gameover",
+    floor: 2,
+    text: "<span class='danger-text'>【ゲームオーバー：闇の抜け道】</span>\n\n抜け道は静かなはずだった。闇の奥で息を潜めていた悪魔たちが、一斉に爪を伸ばした。",
     status: "死亡",
     choices: []
   },
 
+  gameover_rocks: {
+    type: "gameover",
+    floor: 2,
+    text: "<span class='danger-text'>【ゲームオーバー：落石】</span>\n\n岩が崩れて轟音が響いた。闇の縁に潜んでいた悪魔たちが、一斉に動き出した。",
+    status: "死亡",
+    choices: []
+  },
+
+
   gameover_wait: {
+    type: "gameover",
+    floor: 1,
     text: "<span class='danger-text'>【ゲームオーバー：長い沈黙】</span>\n\n立ち尽くす時間が長いほど、悪魔の興味は戻った。鼻が動き、牙が近づいてきた。",
     status: "死亡",
     choices: []
   },
 
   gameover_stuck: {
+    type: "gameover",
+    floor: 1,
     text: "<span class='danger-text'>【ゲームオーバー：行き止まり】</span>\n\n壁を押すと土が崩れ、排水溝が塞がった。闇の中で息が薄れ、外はもう遠い。",
     status: "死亡",
     choices: []
   },
 
   gameover_gate: {
+    type: "gameover",
+    floor: 1,
     text: "<span class='danger-text'>【ゲームオーバー：追う者】</span>\n\n駆ける足音に、悪魔が地を蹴った。巨大な腕があなたを捕らえた。",
     status: "死亡",
     choices: []
@@ -920,6 +1197,9 @@ const storyData = {
   // ==================================================
 
   escape_true: {
+    type: "ending",
+    floor: 1,
+    endingId: "true",
     text: "<span class='clear-text'>【エンディング：夜明けの生還】</span>\n\n光が悪魔に届くと、悪魔は嫌がって横穴の闇へ引き返していった。出口が空いた。",
     status: "生還への道が開けた",
     choices: [
@@ -928,12 +1208,18 @@ const storyData = {
   },
 
   escape_true_2: {
+    type: "ending",
+    floor: 1,
+    endingId: "true",
     text: "足をもつれさせて光の中へ。朝の風、草の匂い、青い空。駆け出しのあなたは、自力で地上へ生還した。",
     status: "生還",
     choices: []
   },
 
   escape_normal: {
+    type: "ending",
+    floor: 1,
+    endingId: "normal",
     text: "<span class='clear-text'>【エンディング：泥まみれの生還】</span>\n\n荷物を捨て、泥だらけで排水溝を抜けた。泥と水の匂いが人の匂いを消したのか、悪魔は出口の前で、気づかず唸っていた。",
     status: "地上が目の前",
     choices: [
@@ -942,12 +1228,18 @@ const storyData = {
   },
 
   escape_normal_2: {
+    type: "ending",
+    floor: 1,
+    endingId: "normal",
     text: "泥と傷にまみれ、悪魔から離れた草むらに倒れ込んだ。夜明け前の冷たい空気。装備はすべて失ったが、あなたは生きて戻った。",
     status: "生還（装備喪失）",
     choices: []
   },
 
   escape_gamble: {
+    type: "ending",
+    floor: 1,
+    endingId: "gamble",
     text: "<span class='clear-text'>【エンディング：賭けの勝利】</span>\n\n悪魔が眠るのを見届け、壁際を回り込み、足音を殺して出口へ向かった。",
     status: "地上が目の前",
     choices: [
@@ -956,6 +1248,9 @@ const storyData = {
   },
 
   escape_gamble_2: {
+    type: "ending",
+    floor: 1,
+    endingId: "gamble",
     text: "一か八かの賭けに勝ち、駆け出し冒険者は人類未踏の深層から、地上へ生還した。",
     status: "生還（運と度胸）",
     choices: []
