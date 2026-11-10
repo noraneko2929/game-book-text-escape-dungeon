@@ -998,3 +998,263 @@ const storyData = {
     text: "<span class='danger-text'>【ゲームオーバー：擬態】</span>\n\n石像の目が動いた。悪魔はあなたを掴み、溶岩の川へ放り投げた。",
     status: "死亡",
     choices: []
+  },
+
+  gameover_fall: {
+    type: "gameover",
+    floor: 7,
+    text: "<span class='danger-text'>【ゲームオーバー：岩棚】</span>\n\n走った重みに岩棚が耐えきれず崩れた。身体は溶岩の川へ落ちていった。",
+    status: "死亡",
+    choices: []
+  },
+
+  gameover_slip_hurt: {
+    type: "gameover",
+    floor: 8,
+    text: "<span class='danger-text'>【ゲームオーバー：痛む肩】</span>\n\n肩に力を入れた瞬間、激痛で手が離れた。泥の中の巨大な影が、口を開けて待っていた。",
+    status: "死亡",
+    choices: []
+  },
+
+  gameover_cough: {
+    type: "gameover",
+    floor: 8,
+    text: "<span class='danger-text'>【ゲームオーバー：咳】</span>\n\n咳が霧に響いた。泥の中の巨大な影が、音のほうへゆっくりと向きを変えた。",
+    status: "死亡",
+    choices: []
+  },
+
+  gameover_nest: {
+    type: "gameover",
+    floor: 7,
+    text: "<span class='danger-text'>【ゲームオーバー：親の怒り】</span>\n\n幼体の悲鳴に、洞窟の外から怒りの咆哮が応えた。親が戻ってきたのだ。",
+    status: "死亡",
+    choices: []
+  },
+
+  gameover_crush: {
+    type: "gameover",
+    floor: 6,
+    text: "<span class='danger-text'>【ゲームオーバー：崩落】</span>\n\n伏せたまま動けないうちに、天井が崩れ、岩が降り注いだ。",
+    status: "死亡",
+    choices: []
+  },
+
+  gameover_dig: {
+    type: "gameover",
+    floor: 6,
+    text: "<span class='danger-text'>【ゲームオーバー：地中の爪】</span>\n\n静まり返った坑道で、足音は悪魔に筒抜けだった。足元の床が、爪で裂けた。",
+    status: "死亡",
+    choices: []
+  },
+
+  gameover_water: {
+    type: "gameover",
+    floor: 5,
+    text: "<span class='danger-text'>【ゲームオーバー：水底】</span>\n\n足首を何かが掴んだ。黒い水の底へ、凄まじい力で引きずり込まれた。",
+    status: "死亡",
+    choices: []
+  },
+
+  gameover_bench: {
+    type: "gameover",
+    floor: 5,
+    text: "<span class='danger-text'>【ゲームオーバー：足場の崩壊】</span>\n\n走った拍子に足場が傾き、水へ落ちた。待っていた牙が、足首を捕らえた。",
+    status: "死亡",
+    choices: []
+  },
+
+  gameover_beam: {
+    type: "gameover",
+    floor: 5,
+    text: "<span class='danger-text'>【ゲームオーバー：梁の崩壊】</span>\n\n梁の上で立ち上がった瞬間、朽ちた木が折れ、水面へ落ちた。待っていた牙が、あなたを捕らえた。",
+    status: "死亡",
+    choices: []
+  },
+
+  gameover_bell: {
+    type: "gameover",
+    floor: 5,
+    text: "<span class='danger-text'>【ゲームオーバー：二度目の鐘】</span>\n\n二度目の鐘で、悪魔は音の出どころを悟った。綱を握る者のいる水際へ殺到した。",
+    status: "死亡",
+    choices: []
+  },
+
+  gameover_cell: {
+    type: "gameover",
+    floor: 4,
+    text: "<span class='danger-text'>【ゲームオーバー：牢の怒号】</span>\n\n駆ける足音に悪魔たちが吠え、檻を揺らした。看守が目を覚ました。",
+    status: "死亡",
+    choices: []
+  },
+
+  gameover_guard: {
+    type: "gameover",
+    floor: 4,
+    text: "<span class='danger-text'>【ゲームオーバー：看守】</span>\n\n看守が鼻を鳴らし、ゆっくりと顔を上げた。逃げ場のない廊下で、巨体が立ちはだかる。",
+    status: "死亡",
+    choices: []
+  },
+
+  gameover_guard_back: {
+    type: "gameover",
+    floor: 4,
+    text: "<span class='danger-text'>【ゲームオーバー：看守の帰還】</span>\n\n騒ぎを収めた看守が戻ってきた。物陰に潜むあなたを、巨体が見下ろした。",
+    status: "死亡",
+    choices: []
+  },
+
+  gameover_shelf: {
+    type: "gameover",
+    floor: 3,
+    text: "<span class='danger-text'>【ゲームオーバー：書棚】</span>\n\n跳び移った本棚が倒れた。轟音に、書庫中の悪魔が顔を上げた。",
+    status: "死亡",
+    choices: []
+  },
+
+  gameover_blade: {
+    type: "gameover",
+    floor: 3,
+    text: "<span class='danger-text'>【ゲームオーバー：刃】</span>\n\nナイフは硬い皮膚に弾かれた。紙を食む牙が、あなたに向いた。",
+    status: "死亡",
+    choices: []
+  },
+
+  gameover_dark: {
+    type: "gameover",
+    floor: 2,
+    text: "<span class='danger-text'>【ゲームオーバー：日没】</span>\n\n光は消え、闇が戻った。影に潜んでいた悪魔たちが、一斉に動き出した。",
+    status: "死亡",
+    choices: []
+  },
+
+  gameover_shadow: {
+    type: "gameover",
+    floor: 2,
+    text: "<span class='danger-text'>【ゲームオーバー：影の縄張り】</span>\n\n影の中の悪魔たちが、音もなく距離を詰めてきた。逃げ道は塞がれた。",
+    status: "死亡",
+    choices: []
+  },
+
+  gameover_smoke: {
+    type: "gameover",
+    floor: 3,
+    text: "<span class='danger-text'>【ゲームオーバー：煙】</span>\n\n煙は想像より速く回った。咳が止まらず、炎に群がっていた悪魔が振り向いた。",
+    status: "死亡",
+    choices: []
+  },
+
+  gameover_creak: {
+    type: "gameover",
+    floor: 3,
+    text: "<span class='danger-text'>【ゲームオーバー：軋む棚】</span>\n\n進み続ける棚の軋みを、悪魔は逃さなかった。棚が激しく揺さぶられた。",
+    status: "死亡",
+    choices: []
+  },
+
+  gameover_passage: {
+    type: "gameover",
+    floor: 2,
+    text: "<span class='danger-text'>【ゲームオーバー：闇の抜け道】</span>\n\n抜け道は静かなはずだった。闇の奥で息を潜めていた悪魔たちが、一斉に爪を伸ばした。",
+    status: "死亡",
+    choices: []
+  },
+
+  gameover_rocks: {
+    type: "gameover",
+    floor: 2,
+    text: "<span class='danger-text'>【ゲームオーバー：落石】</span>\n\n岩が崩れて轟音が響いた。闇の縁に潜んでいた悪魔たちが、一斉に動き出した。",
+    status: "死亡",
+    choices: []
+  },
+
+
+  gameover_wait: {
+    type: "gameover",
+    floor: 1,
+    text: "<span class='danger-text'>【ゲームオーバー：長い沈黙】</span>\n\n立ち尽くす時間が長いほど、悪魔の興味は戻った。鼻が動き、牙が近づいてきた。",
+    status: "死亡",
+    choices: []
+  },
+
+  gameover_stuck: {
+    type: "gameover",
+    floor: 1,
+    text: "<span class='danger-text'>【ゲームオーバー：行き止まり】</span>\n\n壁を押すと土が崩れ、排水溝が塞がった。闇の中で息が薄れ、外はもう遠い。",
+    status: "死亡",
+    choices: []
+  },
+
+  gameover_gate: {
+    type: "gameover",
+    floor: 1,
+    text: "<span class='danger-text'>【ゲームオーバー：追う者】</span>\n\n駆ける足音に、悪魔が地を蹴った。巨大な腕があなたを捕らえた。",
+    status: "死亡",
+    choices: []
+  },
+
+  // ==================================================
+  // エンディング
+  // ==================================================
+
+  escape_true: {
+    type: "ending",
+    floor: 1,
+    endingId: "true",
+    text: "<span class='clear-text'>【エンディング：夜明けの生還】</span>\n\n光が悪魔に届くと、悪魔は嫌がって横穴の闇へ引き返していった。出口が空いた。",
+    status: "生還への道が開けた",
+    choices: [
+      { text: "光の中へ踏み出す", next: "escape_true_2" }
+    ]
+  },
+
+  escape_true_2: {
+    type: "ending",
+    floor: 1,
+    endingId: "true",
+    text: "足をもつれさせて光の中へ。朝の風、草の匂い、青い空。駆け出しのあなたは、自力で地上へ生還した。",
+    status: "生還",
+    choices: []
+  },
+
+  escape_normal: {
+    type: "ending",
+    floor: 1,
+    endingId: "normal",
+    text: "<span class='clear-text'>【エンディング：泥まみれの生還】</span>\n\n荷物を捨て、泥だらけで排水溝を抜けた。泥と水の匂いが人の匂いを消したのか、悪魔は出口の前で、気づかず唸っていた。",
+    status: "地上が目の前",
+    choices: [
+      { text: "草むらへ這って、悪魔から離れる", next: "escape_normal_2" }
+    ]
+  },
+
+  escape_normal_2: {
+    type: "ending",
+    floor: 1,
+    endingId: "normal",
+    text: "泥と傷にまみれ、悪魔から離れた草むらに倒れ込んだ。夜明け前の冷たい空気。装備はすべて失ったが、あなたは生きて戻った。",
+    status: "生還（装備喪失）",
+    choices: []
+  },
+
+  escape_gamble: {
+    type: "ending",
+    floor: 1,
+    endingId: "gamble",
+    text: "<span class='clear-text'>【エンディング：賭けの勝利】</span>\n\n悪魔が眠るのを見届け、壁際を回り込み、足音を殺して出口へ向かった。",
+    status: "地上が目の前",
+    choices: [
+      { text: "月明かりの中へ踏み出す", next: "escape_gamble_2" }
+    ]
+  },
+
+  escape_gamble_2: {
+    type: "ending",
+    floor: 1,
+    endingId: "gamble",
+    text: "一か八かの賭けに勝ち、駆け出し冒険者は人類未踏の深層から、地上へ生還した。",
+    status: "生還（運と度胸）",
+    choices: []
+  }
+
+};
