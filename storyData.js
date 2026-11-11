@@ -223,8 +223,8 @@ const storyData = {
     text: "自分の足音は消えた。だが見張りの足音が、思ったより近くまで来ている。",
     status: "第九層・見張りが接近",
     choices: [
-      { text: "近くの窪みに隠れ、見張りの足音の間隔を数える", next: "f9_count" },
-      { text: "見つかる前に走って逃げる", next: "gameover_chase" }
+      { text: "近くの窪みに隠れ、足音の間隔を数える", next: "f9_count" },
+      { text: "見つかる前に、窪みを出て回廊を走って逃げる", next: "gameover_chase" }
     ]
   },
 
@@ -245,7 +245,7 @@ const storyData = {
     status: "第九層・気づかれかけている",
     choices: [
       { text: "岩のように動かず、気配を消す", next: "f9_still" },
-      { text: "逃げる", next: "gameover_chase" }
+      { text: "悪魔に背を向け、回廊を走って逃げる", next: "gameover_chase" }
     ]
   },
 
@@ -488,7 +488,7 @@ const storyData = {
     status: "第六層・崩落が迫る",
     choices: [
       { text: "崩落に追いつかれる前に、出口へ走る", next: "f6_exit" },
-      { text: "壁際に伏せて、やり過ごす", next: "gameover_crush" }
+      { text: "壁際に身を伏せて、崩落が収まるのをやり過ごす", next: "gameover_crush" }
     ]
   },
 
@@ -670,8 +670,8 @@ const storyData = {
     text: "撒かれた水に、渇いた悪魔たちが檻を揺らして群がる。物陰に身を寄せると、看守が怒鳴りながら脇を通り、檻へ向かった。",
     status: "第四層・牢獄回廊／水袋を失う",
     choices: [
-      { text: "看守が離れた隙に、看守部屋の奥の扉へ急ぐ", next: "f4_stairs" },
-      { text: "物陰で、騒ぎが収まるのを待つ", next: "gameover_guard_back" }
+      { text: "看守が離れた隙に、看守部屋の奥へ急ぐ", next: "f4_stairs" },
+      { text: "物陰に身を寄せたまま、騒ぎが収まるのを待つ", next: "gameover_guard_back" }
     ]
   },
 
@@ -697,8 +697,7 @@ const storyData = {
     status: "第三層・崩れた書庫",
     choices: [
       { text: "本棚の上をよじ登って進む", next: "f3_shelf" },
-      { text: "本棚の間の通路を進む", next: "f3_aisle" },
-      { text: "ランタンを灯して、明るく進む", next: "gameover_light" }
+      { text: "本棚の間の通路を進む", next: "f3_aisle" },      { text: "ランタンを灯して、明るく進む", next: "gameover_light" }
     ]
   },
 
@@ -709,7 +708,7 @@ const storyData = {
     status: "第三層・本棚の上",
     choices: [
       { text: "体重を分散し、這って進む", next: "f3_shelf2" },
-      { text: "次の棚へ跳び移る", next: "gameover_shelf" }
+      { text: "次の棚へ、勢いをつけて跳び移る", next: "gameover_shelf" }
     ]
   },
 
@@ -821,7 +820,7 @@ const storyData = {
   f2_run: {
     type: "normal",
     floor: 2,
-    text: "光が消える寸前、坑道へ駆け込んだ。入口の刻印は「一」。背後で、悪魔たちが残光に阻まれ牙を鳴らす。",
+    text: "岩場を越えると、残光が消えかけていた。坑道へ駆け込んだ。入口の刻印は「一」。背後では、残光に阻まれた悪魔たちが牙を鳴らす。",
     status: "第二層・出口",
     choices: [
       { text: "坑道を進む", next: "f1_start" }
@@ -861,8 +860,8 @@ const storyData = {
     text: "排水溝の中ほどで肩がつかえ、動けなくなった。外の月明かりは、すぐそこだ。",
     status: "第一層・排水溝の中／身動きがとれない",
     choices: [
-      { text: "上着と荷物を脱ぎ、息を吐いて身体を細くする", next: "escape_normal" },
-      { text: "力任せに、壁を押し広げる", next: "gameover_stuck" }
+      { text: "荷物を捨て、息を吐いて身体を細くする", next: "escape_normal" },
+      { text: "力任せに、狭い排水溝の壁を押し広げて進む", next: "gameover_stuck" }
     ]
   },
 
